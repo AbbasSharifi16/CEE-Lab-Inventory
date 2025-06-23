@@ -1,160 +1,226 @@
-# CEE Lab Equipment Manager
+# CEE Lab Equipment Inventory Management System
 
-A comprehensive web application for managing laboratory equipment across multiple CEE lab facilities.
+A comprehensive web-based inventory management system designed for Civil and Environmental Engineering (CEE) laboratories. This system allows efficient tracking, management, and documentation of laboratory equipment with advanced features including QR code generation, barcode support, and detailed reporting.
 
-## Features
+## 🚀 Live Demo
 
-### 🔍 **Search & Filter**
-- Real-time search across equipment names, categories, serial numbers, and notes
-- Filter by lab number (EC3625, EC3630, EC3760, EC3765, OU107, OU106)
-- Filter by equipment status (Healthy, Damaged, Troubleshooting, Maintenance)
-- Clear search functionality
+**Deployed on Render**: [CEE Lab Inventory](https://cee-lab-inventory.onrender.com)
 
-### 📋 **Equipment Information**
-Each equipment entry includes:
-- Equipment name and photo
-- Category and lab assignment
-- Buying date and calculated age
-- Serial number and quantity
-- Purchase price
-- Current status with visual indicators
-- Detailed notes
+## ✨ Features
 
-### 👤 **Admin Features**
-- Toggle admin mode for equipment management
-- Change equipment status (Healthy, Damaged, Troubleshooting, Maintenance)
-- Status updates with confirmation notifications
+### � Equipment Management
+- **Add/Edit Equipment**: Complete equipment information entry with validation
+- **Image Upload**: Equipment photos with drag-and-drop support
+- **Search & Filter**: Advanced filtering by lab, status, category, and search terms
+- **Status Tracking**: Monitor equipment condition (Healthy, Damaged, Troubleshooting, etc.)
 
-### 📄 **Reporting**
-- Generate Word documents with equipment lists
-- Select specific labs or all labs for reports
-- Professional table format with all equipment details (excluding images)
-- Automatic file naming with current date
+### 🏷️ Advanced Identification
+- **FIU ID Support**: University asset tracking integration
+- **Barcode Generation**: CODE128 barcodes for FIU IDs
+- **Model Numbers**: Detailed equipment model tracking
+- **Serial Numbers**: Unique equipment identification
 
-### 🎨 **Modern Design**
-- Google Material Design inspired interface
-- Responsive layout for desktop and mobile
-- Interactive cards with hover effects
-- Professional color scheme and typography
+### 📱 QR Code & Manual Management
+- **Manual Links**: Direct links to equipment documentation
+- **QR Code Generation**: Scannable codes for mobile access to manuals
+- **Multiple Fallbacks**: Robust QR generation with offline support
+- **Printable Labels**: Professional equipment labels with QR codes
 
-## Getting Started
+### 📊 Reporting & Export
+- **Word Export**: Detailed equipment reports
+- **Excel Export**: Spreadsheet format for data analysis
+- **PDF Generation**: Professional documentation
+- **Lab Summaries**: Equipment counts and value calculations
+
+### 💾 Data Management
+- **SQLite Database**: Lightweight, reliable data storage
+- **Optional Fields**: Flexible data entry (buying date and price optional)
+- **Data Migration**: Seamless database updates
+- **Backup Support**: Easy data export/import
+
+## 🛠️ Technology Stack
+
+### Backend
+- **Node.js**: Server runtime
+- **Express.js**: Web application framework
+- **SQLite3**: Database management
+- **Multer**: File upload handling
+- **CORS**: Cross-origin resource sharing
+
+### Frontend
+- **HTML5**: Modern web standards
+- **CSS3**: Responsive design with Material Icons
+- **Vanilla JavaScript**: No framework dependencies
+- **QRCode.js**: QR code generation
+- **JsBarcode**: Barcode generation
+
+### Deployment
+- **Render**: Cloud hosting platform
+- **GitHub**: Version control and CI/CD
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- Internet connection (for loading external fonts and libraries)
+- Node.js (v14 or higher)
+- npm or yarn package manager
 
 ### Installation
-1. Download all files to a local directory
-2. Open `index.html` in your web browser
-3. No additional setup required!
 
-### File Structure
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/AbbasSharifi16/CEE-Lab-Inventory.git
+   cd CEE-Lab-Inventory
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start the server**
+   ```bash
+   npm start
+   ```
+
+4. **Access the application**
+   Open your browser and navigate to `http://localhost:3000`
+
+### Development Mode
+```bash
+npm run dev
 ```
-CEE_Lab_APP/
-├── index.html          # Main HTML file
-├── styles.css          # CSS styles and layout
-├── script.js           # JavaScript functionality
-├── data.js             # Equipment data and database
-└── README.md           # This documentation
+This starts the server with nodemon for automatic restarts on file changes.
+
+## 📁 Project Structure
+
 ```
-
-## Usage Guide
-
-### Basic Navigation
-1. **Search Equipment**: Use the search box to find specific equipment by name, serial number, or category
-2. **Filter by Lab**: Select a specific lab from the dropdown to view only that lab's equipment
-3. **Filter by Status**: Choose a status to see equipment in that condition
-4. **View Details**: Click on any equipment card to see full details in a modal window
-
-### Admin Functions
-1. **Enable Admin Mode**: Click the "Admin Mode" button to enable status editing
-2. **Change Status**: In equipment details modal, click "Change Status" button when admin mode is active
-3. **Update Status**: Select new status from dropdown to immediately update equipment status
-
-### Generate Reports
-1. **Open Print Dialog**: Click the "Print Report" button
-2. **Select Labs**: Choose which labs to include in the report
-3. **Generate Document**: Click "Generate Word Document" to create and download the report
-4. **File Download**: The Word document will automatically download with a timestamped filename
-
-## Equipment Database
-
-The application currently includes sample data for 20 equipment items across all 6 labs:
-
-### Labs Included:
-- **EC3625**: Electronics and measurement equipment
-- **EC3630**: Signal processing and analysis tools
-- **EC3760**: Environmental testing equipment
-- **EC3765**: Fluid dynamics and materials testing
-- **OU107**: Optical and sample preparation equipment
-- **OU106**: Chemical analysis and sterilization equipment
-
-### Status Categories:
-- **Healthy**: Equipment is functioning normally
-- **Damaged**: Equipment needs repair
-- **Troubleshooting**: Equipment has known issues being investigated
-- **Maintenance**: Equipment is scheduled for routine maintenance
-
-## Customization
-
-### Adding New Equipment
-Edit the `data.js` file and add new equipment objects to the `equipmentData` array:
-
-```javascript
-{
-    id: 21,                                    // Unique identifier
-    name: "Equipment Name",                    // Display name
-    category: "Equipment Category",            // Category classification
-    lab: "EC3625",                            // Lab assignment
-    buyingDate: "2023-06-13",                // Purchase date (YYYY-MM-DD)
-    serialNumber: "SN-2023-001",             // Serial number
-    quantity: 1,                              // Number of units
-    price: 1000.00,                           // Purchase price
-    status: "Healthy",                        // Current status
-    notes: "Equipment description",           // Additional notes
-    image: "https://example.com/image.jpg"    // Optional image URL
-}
+CEE-Lab-Inventory/
+├── server.js                 # Main server file
+├── package.json              # Dependencies and scripts
+├── index.html                # Frontend interface
+├── script.js                 # Frontend JavaScript
+├── styles.css                # Frontend styling
+├── simple-qr.js             # QR code fallback generator
+├── equipment.db              # SQLite database (auto-created)
+├── uploads/                  # Equipment images storage
+└── README.md                 # This file
 ```
 
-### Modifying Labs
-To add or remove labs, update:
-1. The lab dropdown options in `index.html`
-2. The lab checkbox options in the print modal
-3. Add corresponding equipment data in `data.js`
+## 🔧 Configuration
 
-### Styling Changes
-Modify `styles.css` to customize:
-- Color scheme (CSS custom properties at the top)
-- Layout and spacing
-- Typography and fonts
-- Component styling
+### Environment Variables
+- `PORT`: Server port (default: 3000)
+- `NODE_ENV`: Environment mode (production/development)
 
-## Technical Details
+### Database
+The application uses SQLite for data storage. The database file (`equipment.db`) is automatically created on first run with the following schema:
 
-### Dependencies
-- **External Libraries**:
-  - Google Fonts (Roboto)
-  - Material Icons
-  - html2canvas (for potential future features)
-  - docx library (for Word document generation)
-  - FileSaver.js (for file downloads)
+- **Equipment Table**: Main equipment information
+- **Auto-generated columns**: id, created_at, updated_at
+- **Required fields**: name, category, lab, serialNumber, quantity, status
+- **Optional fields**: model, fiuId, buyingDate, price, notes, image, manualLink
 
-### Browser Compatibility
-- Chrome 70+
-- Firefox 65+
-- Safari 12+
-- Edge 79+
+## 📖 Usage Guide
 
-### Performance
-- Responsive design optimized for devices from 320px to 1200px+
-- Debounced search for smooth performance
-- Efficient filtering and rendering
-- Minimal external dependencies
+### Adding Equipment
+1. Click "Add Equipment" button
+2. Fill in required fields (marked with *)
+3. Optionally add model, FIU ID, buying date, price
+4. Upload equipment image (optional)
+5. Add manual link for QR code generation
+6. Save equipment
 
-## Support
+### Managing Equipment
+1. Click on any equipment card to edit
+2. Update information as needed
+3. Generate and print QR codes for physical labeling
+4. Track equipment status and condition
 
-For technical issues or feature requests, please review the code comments and documentation within the source files.
+### Generating Reports
+1. Use filter options to select equipment
+2. Click "Export to Word/Excel/PDF"
+3. Professional reports with lab summaries
+4. Equipment counts and total values
 
-## License
+### QR Code Features
+1. Add manual links to equipment
+2. QR codes auto-generate for mobile access
+3. Print professional equipment labels
+4. Scan with phone camera to access manuals
 
-This project is designed for educational and internal use within CEE laboratory facilities.
+## 🚀 Deployment on Render
+
+### Automatic Deployment
+This repository is configured for automatic deployment on Render:
+
+1. **Fork this repository**
+2. **Connect to Render**:
+   - Sign up at [render.com](https://render.com)
+   - Connect your GitHub account
+   - Select this repository
+3. **Configure deployment**:
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+   - Environment: Node.js
+4. **Deploy**: Automatic deployment on every commit
+
+### Manual Deployment
+1. Create a new Web Service on Render
+2. Connect your GitHub repository
+3. Configure build settings:
+   ```
+   Build Command: npm install
+   Start Command: npm start
+   ```
+4. Deploy and access your live application
+
+## 📊 API Endpoints
+
+### Equipment Management
+- `GET /api/equipment` - Get all equipment
+- `GET /api/equipment/:id` - Get specific equipment
+- `POST /api/equipment` - Add new equipment
+- `PUT /api/equipment/:id` - Update equipment
+- `DELETE /api/equipment/:id` - Delete equipment
+
+### File Management
+- `POST /uploads` - Upload equipment images
+- `GET /uploads/:filename` - Serve uploaded images
+
+## 🛡️ Security Features
+
+- Input validation and sanitization
+- File upload restrictions (images only)
+- SQL injection prevention
+- XSS protection
+- CORS configuration
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👥 Authors
+
+- **Abbas Sharifi** - *Initial work* - [AbbasSharifi16](https://github.com/AbbasSharifi16)
+
+## 🙏 Acknowledgments
+
+- Civil and Environmental Engineering Department
+- Florida International University
+- Open source community for tools and libraries
+
+## 📞 Support
+
+For support, email asharifi@fiu.edu or create an issue in the GitHub repository.
+
+---
+
+**Built with ❤️ for the CEE Lab Community**
