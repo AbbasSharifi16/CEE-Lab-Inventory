@@ -114,6 +114,7 @@ ehthumbs.db
 Thumbs.db
 
 # Local database file (keep for development, but backup before deploying)
+# Comment out the next line if you want to include your database in git
 # equipment.db
 
 # Upload directory (keep structure, but not uploaded files in git)
@@ -139,3 +140,6 @@ run-migration.bat
 start-server.bat
 test-save.js
 test-schema.js
+
+# Build artifacts that shouldn't be in git
+build.sh

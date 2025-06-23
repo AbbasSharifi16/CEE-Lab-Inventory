@@ -22,15 +22,16 @@
    Environment: Node
    Region: Choose closest to your location
    Branch: main
-   Build Command: npm install
+   Build Command: npm install && npm rebuild sqlite3 --build-from-source
    Start Command: npm start
+   Node Version: 18.x (recommended)
    ```
 
-4. **Advanced Settings (Optional)**
+4. **Advanced Settings**
    ```
-   Node Version: 18.x (or latest stable)
    Environment Variables: 
    - NODE_ENV=production
+   Auto-Deploy: Yes (recommended)
    ```
 
 5. **Deploy**
@@ -117,10 +118,21 @@ If you need user authentication, consider:
 
 ### Common Issues:
 
+**SQLite3 ELF Header Error:**
+```
+Error: invalid ELF header
+```
+**Solution**: Use the correct build command:
+```
+Build Command: npm install && npm rebuild sqlite3 --build-from-source
+```
+This rebuilds SQLite3 for the Linux environment.
+
 **Build Failed:**
 - Check `package.json` dependencies
-- Verify Node.js version compatibility
+- Verify Node.js version compatibility (use 18.x)
 - Check build logs for specific errors
+- Ensure SQLite3 rebuild is included in build command
 
 **Database Issues:**
 - SQLite file permissions
