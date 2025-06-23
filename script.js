@@ -331,7 +331,7 @@ function renderEquipment() {
                     <div><strong>Age:</strong> ${item.age}</div>
                 </div>
                 <div class="equipment-lab">${item.lab}</div>
-                <div class="equipment-status status-${item.status.toLowerCase().replace(' ', '-')}">
+                <div class="equipment-status status-${item.status.toLowerCase().replace(/[\s\/]/g, '-').replace(/[^a-z0-9-]/g, '')}">
                     <span class="material-icons">${getStatusIcon(item.status)}</span>
                     ${item.status}
                 </div>
@@ -343,10 +343,14 @@ function renderEquipment() {
 // Get status icon based on status
 function getStatusIcon(status) {
     switch (status.toLowerCase()) {
-        case 'healthy': return 'check_circle';
-        case 'damaged': return 'error';
+        case 'active / in use': return 'play_circle';
+        case 'stored / in storage': return 'inventory_2';
+        case 'surplus': return 'sell';
+        case 'obsolete / outdated': return 'history';
+        case 'broken / non-functional': return 'error';
         case 'troubleshooting': return 'warning';
-        case 'maintenance': return 'build';
+        case 'under maintenance': return 'build';
+        case 'to be disposed': return 'delete';
         default: return 'help';
     }
 }
@@ -458,12 +462,15 @@ async function showEquipmentDetails(equipmentId) {
                             <input type="number" id="editEquipmentPrice" name="price" value="${equipment.price ? parseFloat(equipment.price) : ''}" step="0.01" min="0" placeholder="Enter price if known">
                         </div>
                         <div class="form-group">
-                            <label for="editEquipmentStatus">Status *</label>
-                            <select id="editEquipmentStatus" name="status" required>
-                                <option value="Healthy" ${equipment.status === 'Healthy' ? 'selected' : ''}>Healthy</option>
-                                <option value="Damaged" ${equipment.status === 'Damaged' ? 'selected' : ''}>Damaged</option>
+                            <label for="editEquipmentStatus">Status *</label>                            <select id="editEquipmentStatus" name="status" required>
+                                <option value="Active / In Use" ${equipment.status === 'Active / In Use' ? 'selected' : ''}>Active / In Use</option>
+                                <option value="Stored / In Storage" ${equipment.status === 'Stored / In Storage' ? 'selected' : ''}>Stored / In Storage</option>
+                                <option value="Surplus" ${equipment.status === 'Surplus' ? 'selected' : ''}>Surplus</option>
+                                <option value="Obsolete / Outdated" ${equipment.status === 'Obsolete / Outdated' ? 'selected' : ''}>Obsolete / Outdated</option>
+                                <option value="Broken / Non-Functional" ${equipment.status === 'Broken / Non-Functional' ? 'selected' : ''}>Broken / Non-Functional</option>
                                 <option value="Troubleshooting" ${equipment.status === 'Troubleshooting' ? 'selected' : ''}>Troubleshooting</option>
-                                <option value="Maintenance" ${equipment.status === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
+                                <option value="Under Maintenance" ${equipment.status === 'Under Maintenance' ? 'selected' : ''}>Under Maintenance</option>
+                                <option value="To be Disposed" ${equipment.status === 'To be Disposed' ? 'selected' : ''}>To be Disposed</option>
                             </select>
                         </div>
                     </div>                    <div class="form-group full-width">
@@ -697,13 +704,16 @@ function createHtmlReportContent(groupedData) {
                 h2 { color: #1976d2; border-bottom: 2px solid #1976d2; padding-bottom: 5px; margin-top: 30px; }
                 .report-info { text-align: center; margin-bottom: 40px; color: #666; }
                 table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f5f5f5; font-weight: bold; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }                th { background-color: #f5f5f5; font-weight: bold; }
                 tr:nth-child(even) { background-color: #f9f9f9; }
-                .status-healthy { color: #388e3c; font-weight: bold; }
-                .status-damaged { color: #d32f2f; font-weight: bold; }
+                .status-active-in-use { color: #388e3c; font-weight: bold; }
+                .status-stored-in-storage { color: #1976d2; font-weight: bold; }
+                .status-surplus { color: #795548; font-weight: bold; }
+                .status-obsolete-outdated { color: #9e9e9e; font-weight: bold; }
+                .status-broken-non-functional { color: #d32f2f; font-weight: bold; }
                 .status-troubleshooting { color: #f57c00; font-weight: bold; }
-                .status-maintenance { color: #9c27b0; font-weight: bold; }
+                .status-under-maintenance { color: #9c27b0; font-weight: bold; }
+                .status-to-be-disposed { color: #424242; font-weight: bold; }
                 .lab-summary { margin-bottom: 20px; padding: 10px; background-color: #f0f7ff; border-left: 4px solid #1976d2; }
             </style>
         </head>
@@ -745,7 +755,7 @@ function createHtmlReportContent(groupedData) {
             `;
 
             equipment.forEach(item => {
-                const statusClass = `status-${item.status.toLowerCase().replace(' ', '-')}`;
+                const statusClass = `status-${item.status.toLowerCase().replace(/[\s\/]/g, '-').replace(/[^a-z0-9-]/g, '')}`;
                 htmlContent += `
                     <tr>                        <td><strong>${item.name}</strong></td>
                         <td>${item.category}</td>
@@ -792,7 +802,7 @@ function createHtmlReportContent(groupedData) {
     `;
 
     Object.keys(statusCounts).forEach(status => {
-        const statusClass = `status-${status.toLowerCase().replace(' ', '-')}`;
+        const statusClass = `status-${status.toLowerCase().replace(/[\s\/]/g, '-').replace(/[^a-z0-9-]/g, '')}`;
         htmlContent += `<tr><th><span class="${statusClass}">${status}</span></th><td>${statusCounts[status]}</td></tr>`;
     });
 

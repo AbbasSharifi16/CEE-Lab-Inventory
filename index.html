@@ -55,13 +55,16 @@
                     </div>
 
                     <div class="filter-group">
-                        <label for="statusFilter">Status:</label>
-                        <select id="statusFilter">
+                        <label for="statusFilter">Status:</label>                        <select id="statusFilter">
                             <option value="">All Status</option>
-                            <option value="Healthy">Healthy</option>
-                            <option value="Damaged">Damaged</option>
+                            <option value="Active / In Use">Active / In Use</option>
+                            <option value="Stored / In Storage">Stored / In Storage</option>
+                            <option value="Surplus">Surplus</option>
+                            <option value="Obsolete / Outdated">Obsolete / Outdated</option>
+                            <option value="Broken / Non-Functional">Broken / Non-Functional</option>
                             <option value="Troubleshooting">Troubleshooting</option>
-                            <option value="Maintenance">Maintenance</option>
+                            <option value="Under Maintenance">Under Maintenance</option>
+                            <option value="To be Disposed">To be Disposed</option>
                         </select>
                     </div>                    <div class="action-buttons">
                         <button id="printBtn" class="btn-primary">
@@ -200,13 +203,16 @@
                                 <input type="number" id="equipmentPrice" name="price" step="0.01" min="0" placeholder="Enter price if known">
                             </div>
                             <div class="form-group">
-                                <label for="equipmentStatus">Status *</label>
-                                <select id="equipmentStatus" name="status" required>
+                                <label for="equipmentStatus">Status *</label>                                <select id="equipmentStatus" name="status" required>
                                     <option value="">Select Status</option>
-                                    <option value="Healthy">Healthy</option>
-                                    <option value="Damaged">Damaged</option>
+                                    <option value="Active / In Use">Active / In Use</option>
+                                    <option value="Stored / In Storage">Stored / In Storage</option>
+                                    <option value="Surplus">Surplus</option>
+                                    <option value="Obsolete / Outdated">Obsolete / Outdated</option>
+                                    <option value="Broken / Non-Functional">Broken / Non-Functional</option>
                                     <option value="Troubleshooting">Troubleshooting</option>
-                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="Under Maintenance">Under Maintenance</option>
+                                    <option value="To be Disposed">To be Disposed</option>
                                 </select>
                             </div>
                         </div>

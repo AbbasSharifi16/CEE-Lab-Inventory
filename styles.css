@@ -350,12 +350,27 @@ body {
     margin-top: 8px;
 }
 
-.status-healthy {
+.status-active-in-use {
     background: rgba(56, 142, 60, 0.1);
     color: var(--success-color);
 }
 
-.status-damaged {
+.status-stored-in-storage {
+    background: rgba(25, 118, 210, 0.1);
+    color: var(--primary-color);
+}
+
+.status-surplus {
+    background: rgba(121, 85, 72, 0.1);
+    color: #795548;
+}
+
+.status-obsolete-outdated {
+    background: rgba(158, 158, 158, 0.1);
+    color: #9e9e9e;
+}
+
+.status-broken-non-functional {
     background: rgba(211, 47, 47, 0.1);
     color: var(--error-color);
 }
@@ -365,9 +380,14 @@ body {
     color: var(--warning-color);
 }
 
-.status-maintenance {
+.status-under-maintenance {
     background: rgba(156, 39, 176, 0.1);
     color: #9c27b0;
+}
+
+.status-to-be-disposed {
+    background: rgba(66, 66, 66, 0.1);
+    color: #424242;
 }
 
 /* Modal Styles */
