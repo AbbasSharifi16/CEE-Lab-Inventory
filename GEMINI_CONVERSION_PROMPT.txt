@@ -1,0 +1,106 @@
+PROMPT FOR GOOGLE GEMINI - EQUIPMENT DATA CONVERSION
+====================================================
+
+Hi Gemini! I need help converting equipment data from Excel/Word files into a specific JSON format for my lab equipment management database. Please convert all the equipment data you find into the following exact JSON structure:
+
+**REQUIRED DATABASE FIELDS:**
+- name (TEXT) - Equipment name/title
+- category (TEXT) - Brand or manufacturer 
+- model (TEXT) - Model number/identifier (can be blank if not available)
+- lab (TEXT) - Lab room number (EC3625, EC3630, EC3760, EC3765, OU107, OU106)
+- buyingDate (TEXT) - Purchase date in YYYY-MM-DD format
+- serialNumber (TEXT) - Unique serial number
+- fiuId (TEXT) - FIU identification number (can be blank if not available)
+- quantity (INTEGER) - Number of items (default to 1 if not specified)
+- price (REAL) - Purchase price in dollars
+- status (TEXT) - Equipment condition: "Healthy", "Damaged", "Troubleshooting", or "Maintenance"
+- notes (TEXT) - Additional comments or description (can be blank)
+
+**OUTPUT FORMAT EXAMPLE:**
+```json
+[
+  {
+    "name": "Digital Multimeter",
+    "category": "Fluke",
+    "model": "87V",
+    "lab": "EC3625",
+    "buyingDate": "2023-01-15",
+    "serialNumber": "DMM-001",
+    "fiuId": "FIU-12345",
+    "quantity": 1,
+    "price": 299.99,
+    "status": "Healthy",
+    "notes": "High precision multimeter for electrical measurements"
+  },
+  {
+    "name": "Oscilloscope",
+    "category": "Tektronix",
+    "model": "",
+    "lab": "EC3630",
+    "buyingDate": "2022-08-20",
+    "serialNumber": "OSC-002",
+    "fiuId": "",
+    "quantity": 1,
+    "price": 1250.00,
+    "status": "Healthy",
+    "notes": ""
+  }
+]
+```
+
+**IMPORTANT CONVERSION RULES:**
+
+1. **Missing Data**: If any field is not available in your source data, use these defaults:
+   - model: "" (empty string)
+   - fiuId: "" (empty string)
+   - notes: "" (empty string)
+   - quantity: 1
+   - status: "Healthy"
+   - buyingDate: "2024-01-01" (if date is missing)
+
+2. **Data Mapping Guidelines:**
+   - Map manufacturer/brand names to "category"
+   - Map equipment names/descriptions to "name"
+   - If lab is not specified, try to infer from context or use "EC3625" as default
+   - Generate unique serial numbers if missing (format: "EQUIP-001", "EQUIP-002", etc.)
+   - Convert prices to numbers (remove $ symbols, commas)
+   - Ensure dates are in YYYY-MM-DD format
+
+3. **Lab Room Options** (choose the most appropriate):
+   - EC3625 (Civil Engineering Lab)
+   - EC3630 (Environmental Engineering Lab)
+   - EC3760 (Structural Engineering Lab)
+   - EC3765 (Geotechnical Engineering Lab)
+   - OU107 (Materials Testing Lab)
+   - OU106 (Research Lab)
+
+4. **Status Options** (choose one):
+   - "Healthy" (default for working equipment)
+   - "Damaged" (broken/non-functional)
+   - "Troubleshooting" (under investigation)
+   - "Maintenance" (scheduled for repair)
+
+**PLEASE:**
+- Convert ALL equipment entries you find in the files
+- Maintain data integrity (don't guess if uncertain about critical fields)
+- Use consistent formatting
+- Generate unique serial numbers for each item
+- Provide the output as a clean JSON array that I can copy-paste
+
+**EXAMPLE FIELDS YOU MIGHT FIND IN SOURCE DATA:**
+- Equipment Name/Description → name
+- Brand/Manufacturer → category  
+- Model Number → model
+- Location/Room → lab
+- Purchase Date → buyingDate
+- Serial/ID Number → serialNumber
+- FIU Asset Tag → fiuId
+- Cost/Price → price
+- Condition/Status → status
+- Comments/Notes → notes
+
+Thank you! Please process the equipment data and provide the JSON output.
+
+---
+
+**FILE TO ANALYZE:** [Paste your Excel/Word content here]

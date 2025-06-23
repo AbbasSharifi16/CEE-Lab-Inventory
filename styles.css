@@ -1,0 +1,994 @@
+/* Google Material Design Inspired Styles */
+:root {
+    --primary-color: #1976d2;
+    --primary-light: #42a5f5;
+    --primary-dark: #1565c0;
+    --secondary-color: #dc004e;
+    --success-color: #388e3c;
+    --warning-color: #f57c00;
+    --error-color: #d32f2f;
+    --background-color: #fafafa;
+    --surface-color: #ffffff;
+    --text-primary: #212121;
+    --text-secondary: #757575;
+    --border-color: #e0e0e0;
+    --shadow-light: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-medium: 0 4px 8px rgba(0,0,0,0.12);
+    --shadow-heavy: 0 8px 16px rgba(0,0,0,0.15);
+    --border-radius: 8px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+/* Header Styles */
+.header {
+    background: #071e3e;
+    color: white;
+    padding: 24px 0;
+    margin: 16px 0 32px 0;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(25, 118, 210, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%);
+    pointer-events: none;
+}
+
+.header-content {
+    padding: 0 32px;
+    position: relative;
+    z-index: 1;
+}
+
+.header-content h1 {
+    font-size: 1.8rem;
+    font-weight: 400;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-content h1 .material-icons {
+    font-size: 1.8rem;
+}
+
+.fiu-logo {
+    height: 1.8rem;
+    width: auto;
+    filter: brightness(0) invert(1);
+    transition: var(--transition);
+}
+
+.fiu-logo:hover {
+    filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255,255,255,0.3));
+}
+
+.header-content p {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+/* Controls Section */
+.controls-section {
+    background: var(--surface-color);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-light);
+}
+
+.search-container {
+    margin-bottom: 24px;
+}
+
+.search-box {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 16px 24px 16px 56px;
+    border: 2px solid var(--border-color);
+    border-radius: 28px;
+    font-size: 16px;
+    background: var(--surface-color);
+    transition: var(--transition);
+    outline: none;
+}
+
+.search-box input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.clear-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: var(--transition);
+    color: var(--text-secondary);
+}
+
+.clear-btn:hover {
+    background: rgba(0,0,0,0.04);
+}
+
+.filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: end;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.filter-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background: var(--surface-color);
+    transition: var(--transition);
+    outline: none;
+}
+
+.filter-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-primary, .btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    box-shadow: var(--shadow-medium);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+}
+
+.btn-secondary:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-secondary.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Results Section */
+.results-section {
+    background: var(--surface-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-light);
+    overflow: hidden;
+}
+
+.results-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.results-header h2 {
+    font-size: 1.5rem;
+    font-weight: 400;
+}
+
+.result-count {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Equipment Grid */
+.equipment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    padding: 24px;
+}
+
+.equipment-card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.equipment-card:hover {
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-2px);
+}
+
+.equipment-image {
+    height: 200px;
+    background: var(--background-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.equipment-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.equipment-image .placeholder {
+    color: var(--text-secondary);
+    font-size: 48px;
+}
+
+.equipment-info {
+    padding: 16px;
+}
+
+.equipment-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.equipment-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.equipment-lab {
+    display: inline-block;
+    padding: 4px 8px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 8px;
+}
+
+.equipment-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 8px;
+}
+
+.status-healthy {
+    background: rgba(56, 142, 60, 0.1);
+    color: var(--success-color);
+}
+
+.status-damaged {
+    background: rgba(211, 47, 47, 0.1);
+    color: var(--error-color);
+}
+
+.status-troubleshooting {
+    background: rgba(245, 124, 0, 0.1);
+    color: var(--warning-color);
+}
+
+.status-maintenance {
+    background: rgba(156, 39, 176, 0.1);
+    color: #9c27b0;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: var(--surface-color);
+    border-radius: var(--border-radius);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-heavy);
+}
+
+.modal-header {
+    padding: 32px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    font-size: 1.5rem;
+    font-weight: 400;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: var(--transition);
+    color: var(--text-secondary);
+}
+
+.close-btn:hover {
+    background: rgba(0,0,0,0.04);
+}
+
+.modal-body {
+    padding: 32px;
+}
+
+.detail-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.detail-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.detail-value {
+    color: var(--text-secondary);
+}
+
+.detail-image {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto 20px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.detail-image img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    transition: var(--transition);
+}
+
+.detail-image:hover img {
+    filter: brightness(0.8);
+}
+
+.image-edit-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(25, 118, 210, 0.9);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.detail-image:hover .image-edit-overlay {
+    opacity: 1;
+}
+
+.detail-image.no-image {
+    height: 200px;
+    background: var(--surface-color);
+    border: 2px dashed var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.detail-image.no-image:hover {
+    background: rgba(25, 118, 210, 0.05);
+    border-color: var(--primary-color);
+}
+
+.detail-image .placeholder {
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.detail-image .placeholder .material-icons {
+    font-size: 3rem;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.detail-image .placeholder p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Hidden file input for image upload */
+.hidden-file-input {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Equipment Edit Form Styles */
+.equipment-edit-form {
+    width: 100%;
+}
+
+.equipment-edit-form .detail-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.equipment-edit-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.equipment-edit-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.equipment-edit-form .form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.equipment-edit-form .form-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.equipment-edit-form .form-group input,
+.equipment-edit-form .form-group select,
+.equipment-edit-form .form-group textarea {
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background: var(--surface-color);
+    transition: var(--transition);
+    outline: none;
+    font-family: inherit;
+}
+
+.equipment-edit-form .form-group input:focus,
+.equipment-edit-form .form-group select:focus,
+.equipment-edit-form .form-group textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(25, 118, 210, 0.05);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 10px;
+}
+
+.info-row span {
+    display: block;
+}
+
+/* Modal Form Actions - Smaller buttons */
+.equipment-edit-form .form-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.equipment-edit-form .form-actions button {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 500;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.equipment-edit-form .form-actions .btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.equipment-edit-form .form-actions .btn-primary:hover {
+    background: #1565c0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
+}
+
+.equipment-edit-form .form-actions .btn-secondary {
+    background: var(--surface-color);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.equipment-edit-form .form-actions .btn-secondary:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: var(--text-secondary);
+    transform: translateY(-1px);
+}
+
+.equipment-edit-form .form-actions .material-icons {
+    font-size: 16px;
+}
+
+/* Add Equipment Form Styles - Consistent with Edit Form */
+.equipment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.equipment-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.equipment-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.equipment-form .form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.equipment-form .form-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.equipment-form .form-group input,
+.equipment-form .form-group select,
+.equipment-form .form-group textarea {
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background: var(--surface-color);
+    transition: var(--transition);
+    outline: none;
+    font-family: inherit;
+}
+
+.equipment-form .form-group input:focus,
+.equipment-form .form-group select:focus,
+.equipment-form .form-group textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.equipment-form .form-group input[type="file"] {
+    padding: 8px;
+    border-style: dashed;
+    cursor: pointer;
+}
+
+/* Add Equipment Form Actions - Smaller buttons */
+.equipment-form .form-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.equipment-form .form-actions button {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 500;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.equipment-form .form-actions .btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.equipment-form .form-actions .btn-primary:hover {
+    background: #1565c0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
+}
+
+.equipment-form .form-actions .btn-secondary {
+    background: var(--surface-color);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.equipment-form .form-actions .btn-secondary:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: var(--text-secondary);
+    transform: translateY(-1px);
+}
+
+.equipment-form .form-actions .material-icons {
+    font-size: 16px;
+}
+
+/* File preview styles for add equipment form */
+.equipment-form .file-preview {
+    position: relative;
+    margin-top: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    max-width: 200px;
+}
+
+.equipment-form .file-preview img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.equipment-form .remove-image-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(211, 47, 47, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.equipment-form .remove-image-btn:hover {
+    background: var(--error-color);
+}
+
+/* FIU Barcode Section Styles */
+.fiu-barcode-section {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+}
+
+.barcode-container {
+    display: flex;
+    justify-content: center;
+    margin: 8px 0;
+    padding: 12px;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #d0d0d0;
+    min-height: 80px;
+    align-items: center;
+}
+
+.barcode-container svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Input with button layout */
+.input-with-button {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.btn-test-qr {
+    padding: 8px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    transition: var(--transition);
+}
+
+.btn-test-qr:hover {
+    background: #1565c0;
+    transform: translateY(-1px);
+}
+
+.btn-test-qr .material-icons {
+    font-size: 18px;
+}
+
+/* Manual Section Styles */
+.manual-section {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+}
+
+.manual-info h4 {
+    margin: 0 0 12px 0;
+    color: var(--text-primary);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.manual-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.btn-manual {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    border: 1px solid var(--primary-color);
+    background: white;
+    color: var(--primary-color);
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.btn-manual:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-manual .material-icons {
+    font-size: 16px;
+}
+
+.qr-code-container {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #d0d0d0;
+}
+
+.qr-info {
+    flex: 1;
+}
+
+.qr-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 14px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.manual-url {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    word-break: break-all;
+    background: rgba(25, 118, 210, 0.1);
+    padding: 4px 6px;
+    border-radius: 3px;
+}
+
+.qr-display {
+    flex-shrink: 0;
+}
+
+.qr-display canvas {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Form help text */
+.form-help {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* Responsive manual section */
+@media (max-width: 768px) {
+    .manual-actions {
+        flex-direction: column;
+    }
+    
+    .btn-manual {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .qr-code-container {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .qr-info {
+        order: 2;
+        margin-top: 12px;
+    }
+    
+    .qr-display {
+        order: 1;
+    }
+}
+
+/* Equipment Details Modal specific styles */

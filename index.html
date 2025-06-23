@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEE Lab Equipment Manager</title>
+    <link rel="stylesheet" href="styles.css">    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">    <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="simple-qr.js"></script>
+</head>
+<body>
+    <div class="container">        <header class="header">
+            <div class="header-content">
+                <h1>
+                    <img src="https://www.fiu.edu/_assets/images/fiu-white-logo.png" alt="FIU Logo" class="fiu-logo">
+                    <span class="material-icons">biotech</span> 
+                    CEE Lab Equipment Manager
+                </h1>
+                <p>Manage and track laboratory equipment across multiple facilities</p>
+            </div>
+        </header>
+
+
+
+
+
+
+        <main class="main-content">
+            <div class="controls-section">
+                <div class="search-container">
+                    <div class="search-box">
+                        <span class="material-icons search-icon">search</span>
+                        <input type="text" id="searchInput" placeholder="Search equipment by name, serial number, or category...">
+                        <button id="clearSearch" class="clear-btn">
+                            <span class="material-icons">clear</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="filter-container">
+                    <div class="filter-group">
+                        <label for="labSelect">Lab Number:</label>
+                        <select id="labSelect">
+                            <option value="">All Labs</option>
+                            <option value="EC3625">EC3625</option>
+                            <option value="EC3630">EC3630</option>
+                            <option value="EC3760">EC3760</option>
+                            <option value="EC3765">EC3765</option>
+                            <option value="OU107">OU107</option>
+                            <option value="OU106">OU106</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="statusFilter">Status:</label>
+                        <select id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="Healthy">Healthy</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Troubleshooting">Troubleshooting</option>
+                            <option value="Maintenance">Maintenance</option>
+                        </select>
+                    </div>                    <div class="action-buttons">
+                        <button id="printBtn" class="btn-primary">
+                            <span class="material-icons">print</span>
+                            Print Report
+                        </button>
+                        <button id="addEquipmentBtn" class="btn-secondary">
+                            <span class="material-icons">add_circle</span>
+                            Add New Equipment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <div class="results-header">
+                    <h2>Equipment List</h2>
+                    <span id="resultCount" class="result-count">0 items found</span>
+                </div>
+
+                <div id="equipmentGrid" class="equipment-grid">
+                    <!-- Equipment cards will be populated by JavaScript -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Equipment Detail Modal -->
+        <div id="equipmentModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalTitle">Equipment Details</h3>
+                    <button id="closeModal" class="close-btn">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Equipment details will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Print Options Modal -->
+        <div id="printModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Print Report Options</h3>
+                    <button id="closePrintModal" class="close-btn">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="print-options">
+                        <h4>Select Labs to Include:</h4>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="all" id="printAllLabs"> All Labs</label>
+                            <label><input type="checkbox" value="EC3625" class="lab-checkbox"> EC3625</label>
+                            <label><input type="checkbox" value="EC3630" class="lab-checkbox"> EC3630</label>
+                            <label><input type="checkbox" value="EC3760" class="lab-checkbox"> EC3760</label>
+                            <label><input type="checkbox" value="EC3765" class="lab-checkbox"> EC3765</label>
+                            <label><input type="checkbox" value="OU107" class="lab-checkbox"> OU107</label>
+                            <label><input type="checkbox" value="OU106" class="lab-checkbox"> OU106</label>
+                        </div>
+                        <div class="print-actions">
+                            <button id="generateReport" class="btn-primary">
+                                <span class="material-icons">description</span>
+                                Generate Word Document
+                            </button>                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Equipment Modal -->
+        <div id="addEquipmentModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add New Equipment</h3>
+                    <button id="closeAddModal" class="close-btn">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addEquipmentForm" class="equipment-form">                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="equipmentName">Equipment Name *</label>
+                                <input type="text" id="equipmentName" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="equipmentCategory">Brand *</label>
+                                <input type="text" id="equipmentCategory" name="category" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="equipmentModel">Model</label>
+                                <input type="text" id="equipmentModel" name="model" placeholder="Equipment model number">
+                            </div>
+                            <div class="form-group">
+                                <label for="equipmentFiuId">FIU ID</label>
+                                <input type="text" id="equipmentFiuId" name="fiuId" placeholder="FIU identification number">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="equipmentLab">Lab Number *</label>
+                                <select id="equipmentLab" name="lab" required>
+                                    <option value="">Select Lab</option>
+                                    <option value="EC3625">EC3625</option>
+                                    <option value="EC3630">EC3630</option>
+                                    <option value="EC3760">EC3760</option>
+                                    <option value="EC3765">EC3765</option>
+                                    <option value="OU107">OU107</option>
+                                    <option value="OU106">OU106</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="equipmentSerial">Serial Number *</label>
+                                <input type="text" id="equipmentSerial" name="serialNumber" required>
+                            </div>
+                        </div>                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="equipmentDate">Buying Date</label>
+                                <input type="date" id="equipmentDate" name="buyingDate">
+                            </div>
+                            <div class="form-group">
+                                <label for="equipmentQuantity">Quantity *</label>
+                                <input type="number" id="equipmentQuantity" name="quantity" min="1" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="equipmentPrice">Price ($)</label>
+                                <input type="number" id="equipmentPrice" name="price" step="0.01" min="0" placeholder="Enter price if known">
+                            </div>
+                            <div class="form-group">
+                                <label for="equipmentStatus">Status *</label>
+                                <select id="equipmentStatus" name="status" required>
+                                    <option value="">Select Status</option>
+                                    <option value="Healthy">Healthy</option>
+                                    <option value="Damaged">Damaged</option>
+                                    <option value="Troubleshooting">Troubleshooting</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="equipmentImage">Equipment Image</label>
+                            <input type="file" id="equipmentImage" name="image" accept="image/*">
+                            <div class="file-preview" id="imagePreview" style="display: none;">
+                                <img id="previewImg" src="" alt="Preview">
+                                <button type="button" id="removeImage" class="remove-image-btn">
+                                    <span class="material-icons">close</span>
+                                </button>
+                            </div>
+                        </div>                        <div class="form-group full-width">
+                            <label for="equipmentNotes">Notes</label>
+                            <textarea id="equipmentNotes" name="notes" rows="3" placeholder="Additional notes about the equipment..."></textarea>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="equipmentManualLink">Manual Link</label>
+                            <input type="url" id="equipmentManualLink" name="manualLink" placeholder="https://example.com/manual.pdf or link to manual">
+                            <small class="form-help">Link to equipment manual, PDF, or documentation</small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" id="cancelAdd" class="btn-secondary">
+                                <span class="material-icons">cancel</span>
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn-primary">
+                                <span class="material-icons">save</span>
+                                Save Equipment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>    <script src="script.js"></script>
+</body>
+</html>
