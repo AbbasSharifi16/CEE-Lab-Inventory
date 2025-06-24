@@ -281,6 +281,7 @@ async function filterEquipment() {
                 (item.model && item.model.toLowerCase().includes(searchTerm)) ||
                 item.serialNumber.toLowerCase().includes(searchTerm) ||
                 (item.fiuId && item.fiuId.toLowerCase().includes(searchTerm)) ||
+                (item.fiuId && item.fiuId.replace(/-/g, '').toLowerCase().includes(searchTerm.replace(/-/g, ''))) ||
                 (item.notes && item.notes.toLowerCase().includes(searchTerm));
 
             const matchesLab = !selectedLab || item.lab === selectedLab;
@@ -351,6 +352,7 @@ function getStatusIcon(status) {
         case 'troubleshooting': return 'warning';
         case 'under maintenance': return 'build';
         case 'to be disposed': return 'delete';
+        case 'not specified': return 'help_outline';
         default: return 'help';
     }
 }
@@ -465,12 +467,12 @@ async function showEquipmentDetails(equipmentId) {
                             <label for="editEquipmentStatus">Status *</label>                            <select id="editEquipmentStatus" name="status" required>
                                 <option value="Active / In Use" ${equipment.status === 'Active / In Use' ? 'selected' : ''}>Active / In Use</option>
                                 <option value="Stored / In Storage" ${equipment.status === 'Stored / In Storage' ? 'selected' : ''}>Stored / In Storage</option>
-                                <option value="Surplus" ${equipment.status === 'Surplus' ? 'selected' : ''}>Surplus</option>
-                                <option value="Obsolete / Outdated" ${equipment.status === 'Obsolete / Outdated' ? 'selected' : ''}>Obsolete / Outdated</option>
+                                <option value="Surplus" ${equipment.status === 'Surplus' ? 'selected' : ''}>Surplus</option>                                <option value="Obsolete / Outdated" ${equipment.status === 'Obsolete / Outdated' ? 'selected' : ''}>Obsolete / Outdated</option>
                                 <option value="Broken / Non-Functional" ${equipment.status === 'Broken / Non-Functional' ? 'selected' : ''}>Broken / Non-Functional</option>
                                 <option value="Troubleshooting" ${equipment.status === 'Troubleshooting' ? 'selected' : ''}>Troubleshooting</option>
                                 <option value="Under Maintenance" ${equipment.status === 'Under Maintenance' ? 'selected' : ''}>Under Maintenance</option>
                                 <option value="To be Disposed" ${equipment.status === 'To be Disposed' ? 'selected' : ''}>To be Disposed</option>
+                                <option value="Not specified" ${equipment.status === 'Not specified' ? 'selected' : ''}>Not specified</option>
                             </select>
                         </div>
                     </div>                    <div class="form-group full-width">

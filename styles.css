@@ -390,6 +390,11 @@ body {
     color: #424242;
 }
 
+.status-not-specified {
+    background: rgba(158, 158, 158, 0.1);
+    color: #9e9e9e;
+}
+
 /* Modal Styles */
 .modal {
     display: none;

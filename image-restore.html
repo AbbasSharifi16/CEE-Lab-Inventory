@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Restoration Tool - CEE Lab Equipment</title>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #1976d2;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .equipment-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .equipment-item {
+            border: 1px solid #eee;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .equipment-item:hover {
+            background: #f0f8ff;
+        }
+        .equipment-item.selected {
+            background: #e3f2fd;
+            border-color: #1976d2;
+        }
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .image-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .image-item:hover {
+            border-color: #1976d2;
+        }
+        .image-item.selected {
+            border-color: #4caf50;
+            background: #e8f5e8;
+        }
+        .image-item img {
+            max-width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .image-name {
+            font-size: 11px;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+        .assign-button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+        }
+        .assign-button:hover {
+            background: #45a049;
+        }
+        .assign-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .stats {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .success {
+            color: #4caf50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ Image Restoration Tool</h1>
+            <p>Restore lost images for EC3625 Lab Equipment</p>
+        </div>
+        
+        <div class="content">
+            <div class="stats">
+                <div>📊 Equipment without images: <span id="equipmentCount">0</span></div>
+                <div>🖼️ Available images: <span id="imageCount">0</span></div>
+                <div>✅ Images assigned: <span id="assignedCount">0</span></div>
+            </div>
+            
+            <div class="grid">
+                <div class="section">
+                    <h3>🔬 EC3625 Equipment (Click to select)</h3>
+                    <div id="equipmentList" class="equipment-list">
+                        Loading equipment...
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h3>🖼️ Available Images (Click to select)</h3>
+                    <div id="imagesList" class="images-grid">
+                        Loading images...
+                    </div>
+                </div>
+            </div>
+            
+            <button id="assignButton" class="assign-button" disabled>
+                📎 Assign Selected Image to Selected Equipment
+            </button>
+            
+            <div id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedEquipment = null;
+        let selectedImage = null;
+        let equipmentData = [];
+        let assignedCount = 0;
+
+        async function loadData() {
+            try {
+                // Load equipment
+                const equipmentResponse = await fetch('/api/equipment?lab=EC3625');
+                equipmentData = await equipmentResponse.json();
+                
+                // Filter equipment without images
+                equipmentData = equipmentData.filter(eq => !eq.image || eq.image === '');
+                
+                // Load available images
+                const imagesResponse = await fetch('/api/images');
+                const images = await imagesResponse.json();
+                
+                displayEquipment(equipmentData);
+                displayImages(images);
+                updateStats();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('status').innerHTML = 
+                    '<div style="color: red;">❌ Error loading data. Make sure the server is running.</div>';
+            }
+        }
+
+        function displayEquipment(equipment) {
+            const container = document.getElementById('equipmentList');
+            container.innerHTML = equipment.map((eq, index) => `
+                <div class="equipment-item" data-id="${eq.id}" data-index="${index}">
+                    <strong>${eq.name}</strong><br>
+                    <small>Brand: ${eq.category} | Serial: ${eq.serialNumber}</small>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            container.querySelectorAll('.equipment-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    container.querySelectorAll('.equipment-item').forEach(i => i.classList.remove('selected'));
+                    item.classList.add('selected');
+                    selectedEquipment = item.dataset.id;
+                    updateAssignButton();
+                });
+            });
+        }
+
+        function displayImages(images) {
+            const container = document.getElementById('imagesList');
+            container.innerHTML = images.map(img => `
+                <div class="image-item" data-filename="${img.filename}">
+                    <img src="/uploads/${img.filename}" alt="${img.filename}">
+                    <div class="image-name">${img.filename}</div>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            container.querySelectorAll('.image-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    container.querySelectorAll('.image-item').forEach(i => i.classList.remove('selected'));
+                    item.classList.add('selected');
+                    selectedImage = item.dataset.filename;
+                    updateAssignButton();
+                });
+            });
+        }
+
+        function updateAssignButton() {
+            const button = document.getElementById('assignButton');
+            button.disabled = !selectedEquipment || !selectedImage;
+        }
+
+        function updateStats() {
+            document.getElementById('equipmentCount').textContent = equipmentData.length;
+            document.getElementById('assignedCount').textContent = assignedCount;
+        }        async function assignImage() {
+            if (!selectedEquipment || !selectedImage) return;
+
+            try {
+                const response = await fetch('/api/equipment/' + selectedEquipment + '/image', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        image: '/uploads/' + selectedImage
+                    })
+                });
+
+                if (response.ok) {
+                    // Remove assigned equipment from list
+                    const equipmentElement = document.querySelector(`[data-id="${selectedEquipment}"]`);
+                    const equipmentIndex = parseInt(equipmentElement.dataset.index);
+                    
+                    equipmentElement.style.background = '#e8f5e8';
+                    equipmentElement.innerHTML += '<div class="success">✅ Image assigned!</div>';
+                    
+                    setTimeout(() => {
+                        equipmentElement.remove();
+                        equipmentData.splice(equipmentIndex, 1);
+                        assignedCount++;
+                        updateStats();
+                    }, 1000);
+
+                    // Remove assigned image from list
+                    const imageElement = document.querySelector(`[data-filename="${selectedImage}"]`);
+                    imageElement.style.opacity = '0.5';
+                    imageElement.innerHTML += '<div class="success">✅ Assigned</div>';
+
+                    selectedEquipment = null;
+                    selectedImage = null;
+                    updateAssignButton();
+
+                    document.getElementById('status').innerHTML = 
+                        '<div class="success">✅ Image assigned successfully!</div>';
+                } else {
+                    throw new Error('Failed to assign image');
+                }
+            } catch (error) {
+                console.error('Error assigning image:', error);
+                document.getElementById('status').innerHTML = 
+                    '<div style="color: red;">❌ Error assigning image</div>';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('assignButton').addEventListener('click', assignImage);
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>

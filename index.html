@@ -33,7 +33,7 @@
                 <div class="search-container">
                     <div class="search-box">
                         <span class="material-icons search-icon">search</span>
-                        <input type="text" id="searchInput" placeholder="Search equipment by name, serial number, or category...">
+                        <input type="text" id="searchInput" placeholder="Search equipment by name, brand, model, serial number, FIU ID">
                         <button id="clearSearch" class="clear-btn">
                             <span class="material-icons">clear</span>
                         </button>
@@ -52,9 +52,7 @@
                             <option value="OU107">OU107</option>
                             <option value="OU106">OU106</option>
                         </select>
-                    </div>
-
-                    <div class="filter-group">
+                    </div>                    <div class="filter-group">
                         <label for="statusFilter">Status:</label>                        <select id="statusFilter">
                             <option value="">All Status</option>
                             <option value="Active / In Use">Active / In Use</option>
@@ -65,8 +63,9 @@
                             <option value="Troubleshooting">Troubleshooting</option>
                             <option value="Under Maintenance">Under Maintenance</option>
                             <option value="To be Disposed">To be Disposed</option>
+                            <option value="Not specified">Not specified</option>
                         </select>
-                    </div>                    <div class="action-buttons">
+                    </div><div class="action-buttons">
                         <button id="printBtn" class="btn-primary">
                             <span class="material-icons">print</span>
                             Print Report
@@ -201,8 +200,7 @@
                             <div class="form-group">
                                 <label for="equipmentPrice">Price ($)</label>
                                 <input type="number" id="equipmentPrice" name="price" step="0.01" min="0" placeholder="Enter price if known">
-                            </div>
-                            <div class="form-group">
+                            </div>                            <div class="form-group">
                                 <label for="equipmentStatus">Status *</label>                                <select id="equipmentStatus" name="status" required>
                                     <option value="">Select Status</option>
                                     <option value="Active / In Use">Active / In Use</option>
@@ -213,6 +211,7 @@
                                     <option value="Troubleshooting">Troubleshooting</option>
                                     <option value="Under Maintenance">Under Maintenance</option>
                                     <option value="To be Disposed">To be Disposed</option>
+                                    <option value="Not specified">Not specified</option>
                                 </select>
                             </div>
                         </div>

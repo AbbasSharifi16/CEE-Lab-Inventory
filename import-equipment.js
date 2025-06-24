@@ -11,15 +11,18 @@ const shouldClearFirst = process.argv.includes('--clear') || process.argv.includ
 const jsonFile = 'equipment_import.json';
 if (!fs.existsSync(jsonFile)) {
     console.log(`❌ Error: ${jsonFile} not found!`);
-    console.log('');
-    console.log('📋 Instructions:');
+    console.log('');    console.log('📋 Instructions:');
     console.log('1. Use the GEMINI_CONVERSION_PROMPT.txt with Google Gemini');
-    console.log('2. Paste your Excel/Word data to Gemini');
+    console.log('2. Paste your Excel/Word data to Gemini to convert to JSON');
     console.log('3. Copy the JSON output from Gemini');
     console.log('4. Save it as "equipment_import.json" in this folder');
     console.log('5. Run this script again:');
     console.log('   node import-equipment.js           (keep existing data)');
     console.log('   node import-equipment.js --clear   (clear all first)');
+    console.log('');
+    console.log('ℹ️  Note: Buying date and price are now OPTIONAL fields');
+    console.log('📝 Required fields: name, category, lab, serialNumber, quantity, status');
+    console.log('📝 Optional fields: buyingDate, price, model, fiuId, notes');
     console.log('');
     console.log('📁 Expected file location:');
     console.log(`   ${__dirname}\\${jsonFile}`);
@@ -40,12 +43,14 @@ try {
 }
 
 // Validate data structure
-const requiredFields = ['name', 'category', 'lab', 'buyingDate', 'serialNumber', 'quantity', 'price', 'status'];
+const requiredFields = ['name', 'category', 'lab', 'serialNumber', 'quantity', 'status'];
+const optionalFields = ['buyingDate', 'price', 'model', 'fiuId', 'notes'];
 const validationErrors = [];
 
 equipmentData.forEach((item, index) => {
+    // Check required fields
     requiredFields.forEach(field => {
-        if (item[field] === undefined || item[field] === null) {
+        if (item[field] === undefined || item[field] === null || item[field] === '') {
             validationErrors.push(`Item ${index + 1}: Missing required field "${field}"`);
         }
     });
@@ -55,13 +60,37 @@ equipmentData.forEach((item, index) => {
     if (!validLabs.includes(item.lab)) {
         validationErrors.push(`Item ${index + 1}: Invalid lab "${item.lab}". Must be one of: ${validLabs.join(', ')}`);
     }
-    
-    // Check valid status values
-    const validStatuses = ['Healthy', 'Damaged', 'Troubleshooting', 'Maintenance'];
+      // Check valid status values (new professional statuses)
+    const validStatuses = [
+        'Active / In Use', 'Stored / In Storage', 'Surplus', 'Obsolete / Outdated',
+        'Broken / Non-Functional', 'Troubleshooting', 'Under Maintenance', 
+        'To be Disposed', 'Not specified'
+    ];
     if (!validStatuses.includes(item.status)) {
         validationErrors.push(`Item ${index + 1}: Invalid status "${item.status}". Must be one of: ${validStatuses.join(', ')}`);
     }
+    
+    // Validate optional fields if present
+    if (item.buyingDate && item.buyingDate !== '' && !isValidDate(item.buyingDate)) {
+        validationErrors.push(`Item ${index + 1}: Invalid buying date format "${item.buyingDate}". Use YYYY-MM-DD format.`);
+    }
+    
+    if (item.price && item.price !== '' && (isNaN(parseFloat(item.price)) || parseFloat(item.price) < 0)) {
+        validationErrors.push(`Item ${index + 1}: Invalid price "${item.price}". Must be a positive number.`);
+    }
+    
+    if (item.quantity && (isNaN(parseInt(item.quantity)) || parseInt(item.quantity) <= 0)) {
+        validationErrors.push(`Item ${index + 1}: Invalid quantity "${item.quantity}". Must be a positive integer.`);
+    }
 });
+
+// Helper function to validate date format
+function isValidDate(dateString) {
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateString)) return false;
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date);
+}
 
 if (validationErrors.length > 0) {
     console.log('❌ Validation errors found:');
@@ -184,17 +213,16 @@ function importData() {
             if (serialNumber !== item.serialNumber) {
                 console.log(`⚠️  Duplicate serial "${item.serialNumber}" → "${serialNumber}"`);
             }
-            
-            stmt.run([
+              stmt.run([
                 item.name,
                 item.category,
                 item.model || null,
                 item.lab,
-                item.buyingDate,
+                item.buyingDate || null,  // Optional field
                 serialNumber,
                 item.fiuId || null,
                 item.quantity,
-                parseFloat(item.price),
+                item.price ? parseFloat(item.price) : null,  // Optional field, handle null/empty
                 item.status,
                 item.notes || null
             ], function(err) {

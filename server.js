@@ -263,12 +263,13 @@ app.get('/api/equipment', (req, res) => {
     if (status) {
         sql += ' AND status = ?';
         params.push(status);
-    }
-    
-    if (search) {
-        sql += ' AND (name LIKE ? OR category LIKE ? OR serialNumber LIKE ? OR notes LIKE ?)';
+    }    if (search) {
+        // For FIU ID search, also check without dashes
+        const searchNoDashes = search.replace(/-/g, '');
+        sql += ' AND (name LIKE ? OR category LIKE ? OR model LIKE ? OR serialNumber LIKE ? OR fiuId LIKE ? OR notes LIKE ? OR REPLACE(fiuId, \'-\', \'\') LIKE ?)';
         const searchTerm = `%${search}%`;
-        params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+        const searchTermNoDashes = `%${searchNoDashes}%`;
+        params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTermNoDashes);
     }
     
     sql += ' ORDER BY created_at DESC';
@@ -285,9 +286,31 @@ app.get('/api/equipment', (req, res) => {
             ...item,
             age: calculateAge(item.buyingDate)
         }));
-        
-        res.json(equipmentWithAge);
+          res.json(equipmentWithAge);
     });
+});
+
+// Get available images for restoration
+app.get('/api/images', (req, res) => {
+    try {
+        const images = fs.readdirSync(uploadsDir)
+            .filter(file => file.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i))
+            .map(filename => {
+                const filePath = path.join(uploadsDir, filename);
+                const stats = fs.statSync(filePath);
+                return {
+                    filename,
+                    size: stats.size,
+                    modified: stats.mtime
+                };
+            })
+            .sort((a, b) => b.modified - a.modified);
+        
+        res.json(images);
+    } catch (error) {
+        console.error('Error listing images:', error);
+        res.status(500).json({ error: 'Error reading images directory' });
+    }
 });
 
 // Get single equipment by ID
@@ -488,6 +511,31 @@ app.put('/api/equipment/:id', upload.single('image'), (req, res) => {
             
             res.json(equipmentWithAge);
         });
+    });
+});
+
+// Update equipment image only (for restoration tool)
+app.put('/api/equipment/:id/image', (req, res) => {
+    const { id } = req.params;
+    const { image } = req.body;
+    
+    console.log('Updating image for equipment ID:', id, 'Image:', image);
+    
+    const updateSQL = 'UPDATE equipment SET image = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+    
+    db.run(updateSQL, [image, id], function(err) {
+        if (err) {
+            console.error('Error updating equipment image:', err.message);
+            res.status(500).json({ error: 'Database error' });
+            return;
+        }
+        
+        if (this.changes === 0) {
+            res.status(404).json({ error: 'Equipment not found' });
+            return;
+        }
+        
+        res.json({ success: true, message: 'Image updated successfully' });
     });
 });
 
