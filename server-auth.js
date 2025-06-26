@@ -519,6 +519,119 @@ app.delete('/api/admin/users/:id', authenticateToken, requireAdmin, (req, res) =
     }
 });
 
+// Update user (admin only)
+app.put('/api/admin/users/:id', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const { firstName, lastName, email, pantherId, phoneNumber, role, authorizedLabs, status } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !pantherId || !role || !authorizedLabs) {
+        return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Validate role
+    if (!['admin', 'grant', 'faculty'].includes(role)) {
+        return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    // Validate status
+    if (status && !['active', 'pending', 'inactive'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    try {
+        // Check if user exists
+        const userStmt = db.prepare('SELECT * FROM users WHERE id = ?');
+        const existingUser = userStmt.get(id);
+        
+        if (!existingUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if email is already taken by another user
+        const emailCheckStmt = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?');
+        const emailExists = emailCheckStmt.get(email, id);
+        
+        if (emailExists) {
+            return res.status(400).json({ message: 'Email already exists' });
+        }
+
+        // Check if pantherId is already taken by another user
+        const pantherIdCheckStmt = db.prepare('SELECT id FROM users WHERE pantherId = ? AND id != ?');
+        const pantherIdExists = pantherIdCheckStmt.get(pantherId, id);
+        
+        if (pantherIdExists) {
+            return res.status(400).json({ message: 'Panther ID already exists' });
+        }
+
+        // Prevent admin from changing their own role or status
+        if (parseInt(id) === req.user.id) {
+            if (role !== existingUser.role) {
+                return res.status(400).json({ message: 'Cannot change your own role' });
+            }
+            if (status && status !== existingUser.status) {
+                return res.status(400).json({ message: 'Cannot change your own status' });
+            }
+        }
+
+        // Convert authorized labs array to string
+        const labsString = Array.isArray(authorizedLabs) ? authorizedLabs.join(',') : authorizedLabs;
+
+        // Update user
+        const updateStmt = db.prepare(`
+            UPDATE users 
+            SET firstName = ?, lastName = ?, email = ?, pantherId = ?, phoneNumber = ?, 
+                role = ?, authorizedLabs = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `);
+
+        const result = updateStmt.run(
+            firstName, 
+            lastName, 
+            email, 
+            pantherId, 
+            phoneNumber || null,
+            role, 
+            labsString, 
+            status || existingUser.status,
+            id
+        );
+
+        if (result.changes === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ message: 'User updated successfully' });
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ message: 'Database error' });
+    }
+});
+
+// Get single user (admin only)
+app.get('/api/admin/users/:id', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const userStmt = db.prepare('SELECT * FROM users WHERE id = ?');
+        const user = userStmt.get(id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Don't return password
+        delete user.password;
+        delete user.setupToken;
+        delete user.setupTokenExpiry;
+
+        res.json(user);
+    } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).json({ message: 'Database error' });
+    }
+});
+
 // Equipment API Routes (Basic versions - need to add full CRUD)
 
 // Get all equipment

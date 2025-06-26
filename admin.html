@@ -283,6 +283,68 @@
                 flex-direction: column;
             }
         }
+
+        /* Edit Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .edit-form {
+            display: grid;
+            gap: 20px;
+        }
     </style>
 </head>
 <body>
@@ -452,6 +514,121 @@
                 </div>
             </div>
         </main>
+
+        <!-- Edit User Modal -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>
+                        <span class="material-icons">edit</span>
+                        Edit User
+                    </h3>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div id="editSuccessMessage" class="success-message"></div>
+                    <div id="editErrorMessage" class="error-message"></div>
+                    
+                    <form id="editUserForm" class="edit-form">
+                        <input type="hidden" id="editUserId" name="userId">
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editFirstName">First Name *</label>
+                                <input type="text" id="editFirstName" name="firstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editLastName">Last Name *</label>
+                                <input type="text" id="editLastName" name="lastName" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editEmail">Email *</label>
+                                <input type="email" id="editEmail" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editPantherId">Panther ID *</label>
+                                <input type="text" id="editPantherId" name="pantherId" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editPhoneNumber">Phone Number</label>
+                                <input type="tel" id="editPhoneNumber" name="phoneNumber">
+                            </div>
+                            <div class="form-group">
+                                <label for="editRole">Role *</label>
+                                <select id="editRole" name="role" required>
+                                    <option value="">Select Role</option>
+                                    <option value="admin">Admin (Full Access)</option>
+                                    <option value="grant">Grant User (Full Access)</option>
+                                    <option value="faculty">Faculty Member (Limited Access)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editStatus">Status *</label>
+                                <select id="editStatus" name="status" required>
+                                    <option value="active">Active</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width" id="editLabsSection">
+                            <label>Authorized Labs *</label>
+                            <div class="checkbox-group">
+                                <label>
+                                    <input type="checkbox" name="editAuthorizedLabs" value="all" id="editAllLabs">
+                                    All Labs
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="editAuthorizedLabs" value="EC3625" class="edit-lab-checkbox">
+                                    EC3625
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="editAuthorizedLabs" value="EC3630" class="edit-lab-checkbox">
+                                    EC3630
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="editAuthorizedLabs" value="EC3760" class="edit-lab-checkbox">
+                                    EC3760
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="editAuthorizedLabs" value="EC3765" class="edit-lab-checkbox">
+                                    EC3765
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="editAuthorizedLabs" value="OU107" class="edit-lab-checkbox">
+                                    OU107
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="editAuthorizedLabs" value="OU106" class="edit-lab-checkbox">
+                                    OU106
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" id="cancelEdit" class="btn btn-secondary">
+                                <span class="material-icons">cancel</span>
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <span class="material-icons">save</span>
+                                Update User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -549,6 +726,33 @@
                 });
                 allLabsCheckbox.disabled = false;
                 allLabsCheckbox.checked = false;
+            });
+
+            // Set up edit modal handlers
+            setupEditModalHandlers();
+        }
+
+        function setupEditModalHandlers() {
+            const modal = document.getElementById('editModal');
+            const closeBtn = document.querySelector('.close');
+            const cancelBtn = document.getElementById('cancelEdit');
+            const editForm = document.getElementById('editUserForm');
+
+            // Close modal when clicking X or Cancel
+            closeBtn.addEventListener('click', closeEditModal);
+            cancelBtn.addEventListener('click', closeEditModal);
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeEditModal();
+                }
+            });
+
+            // Handle form submission
+            editForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await updateUser();
             });
         }
 
@@ -681,8 +885,179 @@
         }
 
         function editUser(userId) {
-            // For now, show an alert. This could be expanded to show an edit modal
-            alert('Edit functionality will be implemented in a future update. For now, you can delete and re-add the user.');
+            // Open edit modal and load user data
+            openEditModal(userId);
+        }
+
+        async function openEditModal(userId) {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const user = await response.json();
+
+                if (response.ok) {
+                    populateEditForm(user);
+                    document.getElementById('editModal').style.display = 'block';
+                } else {
+                    showError(user.message || 'Failed to load user data');
+                }
+            } catch (error) {
+                console.error('Error loading user for edit:', error);
+                showError('Connection error while loading user data');
+            }
+        }
+
+        function populateEditForm(user) {
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editFirstName').value = user.firstName;
+            document.getElementById('editLastName').value = user.lastName;
+            document.getElementById('editEmail').value = user.email;
+            document.getElementById('editPantherId').value = user.pantherId;
+            document.getElementById('editPhoneNumber').value = user.phoneNumber || '';
+            document.getElementById('editRole').value = user.role;
+            document.getElementById('editStatus').value = user.status;
+
+            // Handle authorized labs
+            const authorizedLabs = user.authorizedLabs ? user.authorizedLabs.split(',') : [];
+            const editLabCheckboxes = document.querySelectorAll('.edit-lab-checkbox');
+            const editAllLabsCheckbox = document.getElementById('editAllLabs');
+
+            // Clear all checkboxes first
+            editLabCheckboxes.forEach(cb => cb.checked = false);
+            editAllLabsCheckbox.checked = false;
+
+            // Set authorized labs
+            authorizedLabs.forEach(lab => {
+                const checkbox = document.querySelector(`.edit-lab-checkbox[value="${lab}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+
+            // Check if all labs are selected
+            const allChecked = Array.from(editLabCheckboxes).every(cb => cb.checked);
+            editAllLabsCheckbox.checked = allChecked;
+
+            // Set up role-based restrictions
+            setupEditRoleRestrictions();
+        }
+
+        function setupEditRoleRestrictions() {
+            const editRoleSelect = document.getElementById('editRole');
+            const editAllLabsCheckbox = document.getElementById('editAllLabs');
+            const editLabCheckboxes = document.querySelectorAll('.edit-lab-checkbox');
+
+            // Handle role change
+            editRoleSelect.addEventListener('change', function() {
+                const role = this.value;
+                if (role === 'admin' || role === 'grant') {
+                    editAllLabsCheckbox.checked = true;
+                    editAllLabsCheckbox.disabled = true;
+                    editLabCheckboxes.forEach(cb => {
+                        cb.checked = true;
+                        cb.disabled = true;
+                    });
+                } else {
+                    editAllLabsCheckbox.disabled = false;
+                    editLabCheckboxes.forEach(cb => {
+                        cb.disabled = false;
+                    });
+                }
+            });
+
+            // Handle "All Labs" checkbox
+            editAllLabsCheckbox.addEventListener('change', function() {
+                editLabCheckboxes.forEach(cb => {
+                    cb.checked = this.checked;
+                });
+            });
+
+            // Handle individual lab checkboxes
+            editLabCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const allChecked = Array.from(editLabCheckboxes).every(checkbox => checkbox.checked);
+                    editAllLabsCheckbox.checked = allChecked;
+                });
+            });
+
+            // Trigger role change to set initial state
+            editRoleSelect.dispatchEvent(new Event('change'));
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            document.getElementById('editSuccessMessage').style.display = 'none';
+            document.getElementById('editErrorMessage').style.display = 'none';
+            
+            // Remove event listeners to prevent duplicates
+            const editRoleSelect = document.getElementById('editRole');
+            const newEditRoleSelect = editRoleSelect.cloneNode(true);
+            editRoleSelect.parentNode.replaceChild(newEditRoleSelect, editRoleSelect);
+        }
+
+        async function updateUser() {
+            const formData = new FormData(document.getElementById('editUserForm'));
+            const authorizedLabs = Array.from(document.querySelectorAll('input[name="editAuthorizedLabs"]:checked'))
+                .map(cb => cb.value)
+                .filter(value => value !== 'all');
+
+            const userData = {
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                email: formData.get('email'),
+                pantherId: formData.get('pantherId'),
+                phoneNumber: formData.get('phoneNumber'),
+                role: formData.get('role'),
+                status: formData.get('status'),
+                authorizedLabs: authorizedLabs
+            };
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const userId = document.getElementById('editUserId').value;
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showEditSuccess('User updated successfully!');
+                    setTimeout(() => {
+                        closeEditModal();
+                        loadUsers();
+                    }, 1500);
+                } else {
+                    showEditError(result.message || 'Failed to update user');
+                }
+            } catch (error) {
+                console.error('Error updating user:', error);
+                showEditError('Connection error. Please try again.');
+            }
+        }
+
+        function showEditSuccess(message) {
+            const successDiv = document.getElementById('editSuccessMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('editErrorMessage').style.display = 'none';
+        }
+
+        function showEditError(message) {
+            const errorDiv = document.getElementById('editErrorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('editSuccessMessage').style.display = 'none';
         }
 
         function showSuccess(message) {
