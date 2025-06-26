@@ -700,6 +700,188 @@ app.get('/api/equipment', authenticateToken, (req, res) => {
     }
 });
 
+// Equipment Backup API (admin only)
+app.post('/api/admin/backup', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        console.log('🔄 Starting equipment backup from admin panel...');
+        
+        // Get all equipment data for backup
+        const sql = `
+            SELECT 
+                name,
+                category,
+                model,
+                lab,
+                buyingDate,
+                serialNumber,
+                fiuId,
+                quantity,
+                price,
+                status,
+                notes,
+                image,
+                manualLink,
+                created_at,
+                updated_at
+            FROM equipment 
+            ORDER BY lab, name
+        `;
+        
+        const stmt = db.prepare(sql);
+        const rows = stmt.all();
+        
+        console.log(`📊 Found ${rows.length} equipment records to backup`);
+
+        // Transform the data to match import format
+        const backupData = rows.map(row => {
+            const equipment = {
+                name: row.name,
+                category: row.category,
+                lab: row.lab,
+                serialNumber: row.serialNumber,
+                quantity: row.quantity,
+                status: row.status || 'Not specified'
+            };
+
+            // Add optional fields only if they have values
+            if (row.model) equipment.model = row.model;
+            if (row.fiuId) equipment.fiuId = row.fiuId;
+            if (row.buyingDate) equipment.buyingDate = row.buyingDate;
+            if (row.price !== null && row.price !== undefined) equipment.price = row.price;
+            if (row.notes) equipment.notes = row.notes;
+            if (row.image) equipment.image = row.image;
+            if (row.manualLink) equipment.manualLink = row.manualLink;
+
+            // Add metadata for reference
+            if (row.created_at) equipment.created_at = row.created_at;
+            if (row.updated_at) equipment.updated_at = row.updated_at;
+
+            return equipment;
+        });
+
+        // Create backup metadata
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const backupMetadata = {
+            backupDate: new Date().toISOString(),
+            totalRecords: rows.length,
+            labs: [...new Set(rows.map(r => r.lab))].sort(),
+            statusCounts: {},
+            imageCount: rows.filter(r => r.image).length,
+            description: 'Equipment database backup from admin panel - can be used with import-equipment.js to restore data'
+        };
+
+        // Count equipment by status
+        rows.forEach(row => {
+            const status = row.status || 'Not specified';
+            backupMetadata.statusCounts[status] = (backupMetadata.statusCounts[status] || 0) + 1;
+        });
+
+        // Create the backup data objects
+        const backupObject = {
+            metadata: backupMetadata,
+            equipment: backupData
+        };
+
+        // For admin panel, we'll return the JSON data directly for download
+        const filename = `equipment_backup_${timestamp}.json`;
+        
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Type', 'application/json');
+        res.json(backupObject);
+
+        console.log(`✅ Backup sent to admin panel: ${filename}`);
+        console.log(`📊 Total records: ${rows.length}`);
+
+    } catch (error) {
+        console.error('Error creating backup:', error);
+        res.status(500).json({ error: 'Failed to create backup' });
+    }
+});
+
+// Get backup data (admin only) - for downloading
+app.get('/api/admin/backup', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        // Get all equipment data
+        const sql = `
+            SELECT 
+                name,
+                category,
+                model,
+                lab,
+                buyingDate,
+                serialNumber,
+                fiuId,
+                quantity,
+                price,
+                status,
+                notes,
+                image,
+                manualLink,
+                created_at,
+                updated_at
+            FROM equipment 
+            ORDER BY lab, name
+        `;
+        
+        const stmt = db.prepare(sql);
+        const rows = stmt.all();
+
+        // Transform the data
+        const backupData = rows.map(row => {
+            const equipment = {
+                name: row.name,
+                category: row.category,
+                lab: row.lab,
+                serialNumber: row.serialNumber,
+                quantity: row.quantity,
+                status: row.status || 'Not specified'
+            };
+
+            if (row.model) equipment.model = row.model;
+            if (row.fiuId) equipment.fiuId = row.fiuId;
+            if (row.buyingDate) equipment.buyingDate = row.buyingDate;
+            if (row.price !== null && row.price !== undefined) equipment.price = row.price;
+            if (row.notes) equipment.notes = row.notes;
+            if (row.image) equipment.image = row.image;
+            if (row.manualLink) equipment.manualLink = row.manualLink;
+            if (row.created_at) equipment.created_at = row.created_at;
+            if (row.updated_at) equipment.updated_at = row.updated_at;
+
+            return equipment;
+        });
+
+        // Create metadata
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const backupMetadata = {
+            backupDate: new Date().toISOString(),
+            totalRecords: rows.length,
+            labs: [...new Set(rows.map(r => r.lab))].sort(),
+            statusCounts: {},
+            imageCount: rows.filter(r => r.image).length,
+            description: 'Equipment database backup from admin panel'
+        };
+
+        rows.forEach(row => {
+            const status = row.status || 'Not specified';
+            backupMetadata.statusCounts[status] = (backupMetadata.statusCounts[status] || 0) + 1;
+        });
+
+        const backupObject = {
+            metadata: backupMetadata,
+            equipment: backupData
+        };
+
+        const filename = `equipment_backup_${timestamp}.json`;
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify(backupObject, null, 2));
+
+    } catch (error) {
+        console.error('Error creating backup:', error);
+        res.status(500).json({ error: 'Failed to create backup' });
+    }
+});
+
 // Serve login page for root
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));

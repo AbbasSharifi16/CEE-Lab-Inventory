@@ -32,6 +32,12 @@
             gap: 10px;
         }
 
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
         .user-management {
             display: grid;
             gap: 30px;
@@ -376,6 +382,12 @@
                         <span class="material-icons">admin_panel_settings</span>
                         User Management
                     </h2>
+                    <div class="admin-actions">
+                        <button onclick="createBackupWithDirectoryChoice()" class="btn btn-secondary" title="Backup equipment list to JSON file">
+                            <span class="material-icons">backup</span>
+                            Backup Equipment
+                        </button>
+                    </div>
                 </div>
 
                 <div id="successMessage" class="success-message"></div>
@@ -1087,6 +1099,123 @@
             localStorage.removeItem('userRole');
             localStorage.removeItem('userId');
             window.location.href = '/login.html';
+        }
+
+        async function createBackup() {
+            try {
+                const token = localStorage.getItem('authToken');
+                
+                // Show loading state
+                const backupBtn = event.target.closest('button');
+                const originalText = backupBtn.innerHTML;
+                backupBtn.innerHTML = '<span class="material-icons">hourglass_empty</span> Creating Backup...';
+                backupBtn.disabled = true;
+
+                console.log('🔄 Starting equipment backup...');
+                
+                const response = await fetch('/api/admin/backup', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create backup');
+                }
+
+                // Get the filename from the response headers
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'equipment_backup.json';
+                
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+
+                // Convert response to blob
+                const blob = await response.blob();
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filename;
+                
+                // Trigger download
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                // Show success message
+                showSuccess(`Backup created successfully! Downloaded as ${filename}`);
+                console.log(`✅ Backup downloaded: ${filename}`);
+
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                showError('Failed to create backup. Please try again.');
+            } finally {
+                // Restore button state
+                const backupBtn = document.querySelector('button[onclick="createBackupWithDirectoryChoice()"]');
+                if (backupBtn) {
+                    backupBtn.innerHTML = '<span class="material-icons">backup</span> Backup Equipment';
+                    backupBtn.disabled = false;
+                }
+            }
+        }
+
+        // Alternative backup function that allows user to choose directory (using File System Access API)
+        async function createBackupWithDirectoryChoice() {
+            try {
+                // Check if the browser supports the File System Access API
+                if ('showDirectoryPicker' in window) {
+                    // Let user choose directory
+                    const directoryHandle = await window.showDirectoryPicker();
+                    
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch('/api/admin/backup', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to create backup');
+                    }
+
+                    const backupData = await response.text();
+                    
+                    // Create filename with timestamp
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    const filename = `equipment_backup_${timestamp}.json`;
+                    
+                    // Create file in chosen directory
+                    const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(backupData);
+                    await writable.close();
+
+                    showSuccess(`Backup saved to chosen directory as ${filename}`);
+                } else {
+                    // Fallback to regular download
+                    createBackup();
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    // User cancelled directory picker
+                    return;
+                }
+                console.error('Error creating backup with directory choice:', error);
+                showError('Failed to save backup to chosen directory. Using download instead.');
+                createBackup();
+            }
         }
     </script>
 </body>
