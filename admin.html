@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - CEE Lab Equipment Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .admin-panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .admin-header h2 {
+            color: #1e3c72;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-management {
+            display: grid;
+            gap: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h3 {
+            color: #333;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .users-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .users-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .users-table th {
+            background: #f8f9fa;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .role-admin {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .role-grant {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .role-faculty {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .status-pending {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btn {
+            padding: 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn.edit {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .action-btn.delete {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .action-btn:hover {
+            opacity: 0.8;
+        }
+
+        .labs-list {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .add-user-form {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .success-message,
+        .error-message {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .users-table {
+                overflow-x: auto;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>
+                    <img src="https://www.fiu.edu/_assets/images/fiu-white-logo.png" alt="FIU Logo" class="fiu-logo">
+                    <span class="material-icons">biotech</span> 
+                    CEE Lab Equipment Manager - Admin Panel
+                </h1>
+                <div class="header-actions">
+                    <button onclick="window.location.href='/'" class="btn btn-secondary">
+                        <span class="material-icons">arrow_back</span>
+                        Back to Equipment
+                    </button>
+                    <button onclick="logout()" class="btn btn-secondary">
+                        <span class="material-icons">logout</span>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="admin-panel">
+                <div class="admin-header">
+                    <h2>
+                        <span class="material-icons">admin_panel_settings</span>
+                        User Management
+                    </h2>
+                </div>
+
+                <div id="successMessage" class="success-message"></div>
+                <div id="errorMessage" class="error-message"></div>
+
+                <div class="user-management">
+                    <!-- Add New User Section -->
+                    <div class="add-user-section">
+                        <div class="section-header">
+                            <h3>
+                                <span class="material-icons">person_add</span>
+                                Add New User
+                            </h3>
+                        </div>
+                        
+                        <div class="add-user-form">
+                            <form id="addUserForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="firstName">First Name *</label>
+                                        <input type="text" id="firstName" name="firstName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lastName">Last Name *</label>
+                                        <input type="text" id="lastName" name="lastName" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="email">Email *</label>
+                                        <input type="email" id="email" name="email" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="pantherId">Panther ID *</label>
+                                        <input type="text" id="pantherId" name="pantherId" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="phoneNumber">Phone Number</label>
+                                        <input type="tel" id="phoneNumber" name="phoneNumber">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="role">Role *</label>
+                                        <select id="role" name="role" required>
+                                            <option value="">Select Role</option>
+                                            <option value="admin">Admin (Full Access)</option>
+                                            <option value="grant">Grant User (Full Access)</option>
+                                            <option value="faculty">Faculty Member (Limited Access)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group full-width" id="labsSection">
+                                    <label>Authorized Labs *</label>
+                                    <div class="checkbox-group">
+                                        <label>
+                                            <input type="checkbox" name="authorizedLabs" value="all" id="allLabs">
+                                            All Labs
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" name="authorizedLabs" value="EC3625" class="lab-checkbox">
+                                            EC3625
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" name="authorizedLabs" value="EC3630" class="lab-checkbox">
+                                            EC3630
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" name="authorizedLabs" value="EC3760" class="lab-checkbox">
+                                            EC3760
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" name="authorizedLabs" value="EC3765" class="lab-checkbox">
+                                            EC3765
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" name="authorizedLabs" value="OU107" class="lab-checkbox">
+                                            OU107
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" name="authorizedLabs" value="OU106" class="lab-checkbox">
+                                            OU106
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="button" id="resetForm" class="btn btn-secondary">
+                                        <span class="material-icons">refresh</span>
+                                        Reset Form
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <span class="material-icons">person_add</span>
+                                        Add User & Send Invite
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Existing Users Section -->
+                    <div class="existing-users-section">
+                        <div class="section-header">
+                            <h3>
+                                <span class="material-icons">people</span>
+                                Existing Users
+                            </h3>
+                            <button onclick="loadUsers()" class="btn btn-secondary">
+                                <span class="material-icons">refresh</span>
+                                Refresh
+                            </button>
+                        </div>
+                        
+                        <div class="users-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Authorized Labs</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- Users will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is admin
+            checkAdminAccess();
+            
+            // Load existing users
+            loadUsers();
+            
+            // Set up form handlers
+            setupFormHandlers();
+        });
+
+        async function checkAdminAccess() {
+            const token = localStorage.getItem('authToken');
+            const userRole = localStorage.getItem('userRole');
+            
+            if (!token || userRole !== 'admin') {
+                alert('Access denied. Admin privileges required.');
+                window.location.href = '/';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/verify', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Invalid token');
+                }
+            } catch (error) {
+                console.error('Auth verification failed:', error);
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userId');
+                window.location.href = '/login.html';
+            }
+        }
+
+        function setupFormHandlers() {
+            const addUserForm = document.getElementById('addUserForm');
+            const roleSelect = document.getElementById('role');
+            const allLabsCheckbox = document.getElementById('allLabs');
+            const labCheckboxes = document.querySelectorAll('.lab-checkbox');
+
+            // Handle role change
+            roleSelect.addEventListener('change', function() {
+                const role = this.value;
+                if (role === 'admin' || role === 'grant') {
+                    allLabsCheckbox.checked = true;
+                    allLabsCheckbox.disabled = true;
+                    labCheckboxes.forEach(cb => {
+                        cb.checked = true;
+                        cb.disabled = true;
+                    });
+                } else {
+                    allLabsCheckbox.disabled = false;
+                    labCheckboxes.forEach(cb => {
+                        cb.disabled = false;
+                    });
+                }
+            });
+
+            // Handle "All Labs" checkbox
+            allLabsCheckbox.addEventListener('change', function() {
+                labCheckboxes.forEach(cb => {
+                    cb.checked = this.checked;
+                });
+            });
+
+            // Handle individual lab checkboxes
+            labCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const allChecked = Array.from(labCheckboxes).every(checkbox => checkbox.checked);
+                    allLabsCheckbox.checked = allChecked;
+                });
+            });
+
+            // Handle form submission
+            addUserForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await addUser();
+            });
+
+            // Handle reset form
+            document.getElementById('resetForm').addEventListener('click', function() {
+                addUserForm.reset();
+                labCheckboxes.forEach(cb => {
+                    cb.disabled = false;
+                    cb.checked = false;
+                });
+                allLabsCheckbox.disabled = false;
+                allLabsCheckbox.checked = false;
+            });
+        }
+
+        async function addUser() {
+            const formData = new FormData(document.getElementById('addUserForm'));
+            const authorizedLabs = Array.from(document.querySelectorAll('input[name="authorizedLabs"]:checked'))
+                .map(cb => cb.value)
+                .filter(value => value !== 'all');
+
+            const userData = {
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                email: formData.get('email'),
+                pantherId: formData.get('pantherId'),
+                phoneNumber: formData.get('phoneNumber'),
+                role: formData.get('role'),
+                authorizedLabs: authorizedLabs
+            };
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/admin/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showSuccess('User added successfully! Invitation email sent.');
+                    document.getElementById('addUserForm').reset();
+                    document.querySelectorAll('.lab-checkbox').forEach(cb => {
+                        cb.disabled = false;
+                        cb.checked = false;
+                    });
+                    document.getElementById('allLabs').disabled = false;
+                    document.getElementById('allLabs').checked = false;
+                    loadUsers();
+                } else {
+                    showError(result.message || 'Failed to add user');
+                }
+            } catch (error) {
+                console.error('Error adding user:', error);
+                showError('Connection error. Please try again.');
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/admin/users', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const users = await response.json();
+
+                if (response.ok) {
+                    displayUsers(users);
+                } else {
+                    showError('Failed to load users');
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showError('Connection error while loading users');
+            }
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                const authorizedLabs = user.authorizedLabs ? user.authorizedLabs.split(',') : [];
+                
+                row.innerHTML = `
+                    <td>${user.firstName} ${user.lastName}</td>
+                    <td>${user.email}</td>
+                    <td><span class="role-badge role-${user.role}">${user.role}</span></td>
+                    <td><span class="status-badge status-${user.status}">${user.status}</span></td>
+                    <td class="labs-list">${authorizedLabs.join(', ')}</td>
+                    <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn edit" onclick="editUser(${user.id})" title="Edit User">
+                                <span class="material-icons">edit</span>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteUser(${user.id})" title="Delete User">
+                                <span class="material-icons">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('Are you sure you want to delete this user? They will need to be re-invited if you want to restore access.')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showSuccess('User deleted successfully');
+                    loadUsers();
+                } else {
+                    showError(result.message || 'Failed to delete user');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showError('Connection error. Please try again.');
+            }
+        }
+
+        function editUser(userId) {
+            // For now, show an alert. This could be expanded to show an edit modal
+            alert('Edit functionality will be implemented in a future update. For now, you can delete and re-add the user.');
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userId');
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>

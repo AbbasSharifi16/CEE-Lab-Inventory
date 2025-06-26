@@ -1,9 +1,313 @@
 // Global variables
 let equipmentData = [];
 let filteredData = [];
+let currentUser = null;
 
 // API Configuration
 const API_BASE_URL = 'http://localhost:3000/api';
+
+// Authentication functions
+function getAuthToken() {
+    return localStorage.getItem('authToken');
+}
+
+function getUserRole() {
+    return localStorage.getItem('userRole');
+}
+
+function getUserId() {
+    return localStorage.getItem('userId');
+}
+
+function isAdmin() {
+    return getUserRole() === 'admin';
+}
+
+function isGrantUser() {
+    return getUserRole() === 'grant';
+}
+
+function hasFullAccess() {
+    const role = getUserRole();
+    return role === 'admin' || role === 'grant';
+}
+
+async function checkAuthAndRedirect() {
+    const token = getAuthToken();
+    
+    if (!token) {
+        window.location.href = '/login.html';
+        return false;
+    }
+
+    try {
+        const response = await fetch('/api/auth/verify', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            currentUser = data.user;
+            setupUserInterface();
+            return true;
+        } else {
+            // Token is invalid
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userId');
+            window.location.href = '/login.html';
+            return false;
+        }
+    } catch (error) {
+        console.error('Auth verification error:', error);
+        window.location.href = '/login.html';
+        return false;
+    }
+}
+
+function setupUserInterface() {
+    updateHeaderWithUserInfo();
+    
+    // Setup role-based lab access control
+    setupLabAccessControl();
+    
+    // Add admin button if user is admin
+    if (isAdmin()) {
+        addAdminButton();
+    }
+    
+    // Add logout button
+    addLogoutButton();
+}
+
+// Setup lab access control based on user role
+function setupLabAccessControl() {
+    const labSelect = document.getElementById('labSelect');
+    
+    if (!currentUser || !labSelect) return;
+    
+    // Setup main lab filter dropdown
+    if (currentUser.role === 'faculty') {
+        // Clear existing options
+        labSelect.innerHTML = '';
+        
+        // Add authorized labs only (no "All Labs" option for faculty)
+        if (currentUser.authorizedLabs && currentUser.authorizedLabs.length > 0) {
+            // If user has access to multiple labs, add a default option
+            if (currentUser.authorizedLabs.length > 1) {
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select Lab';
+                labSelect.appendChild(defaultOption);
+            }
+            
+            // Add only authorized labs
+            currentUser.authorizedLabs.forEach(lab => {
+                const option = document.createElement('option');
+                option.value = lab;
+                option.textContent = lab;
+                labSelect.appendChild(option);
+            });
+            
+            // If user has only one lab, auto-select it
+            if (currentUser.authorizedLabs.length === 1) {
+                labSelect.value = currentUser.authorizedLabs[0];
+                // Trigger filter to load equipment for this lab
+                filterEquipment();
+            }
+        }
+    } else {
+        // For admin and grant users, keep all lab options
+        // Ensure "All Labs" option exists
+        const allLabsOption = labSelect.querySelector('option[value=""]');
+        if (!allLabsOption) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'All Labs';
+            labSelect.insertBefore(option, labSelect.firstChild);
+        }
+    }
+    
+    // Setup print lab options
+    setupPrintLabOptions();
+}
+
+// Setup print lab options based on user role
+function setupPrintLabOptions() {
+    if (!currentUser) return;
+    
+    const printAllLabs = document.getElementById('printAllLabs');
+    const labCheckboxes = document.querySelectorAll('.lab-checkbox');
+    const checkboxGroup = document.querySelector('.checkbox-group');
+    
+    if (currentUser.role === 'faculty') {
+        // Hide "All Labs" option for faculty
+        if (printAllLabs && printAllLabs.parentElement) {
+            printAllLabs.parentElement.style.display = 'none';
+        }
+        
+        // Hide unauthorized lab checkboxes
+        labCheckboxes.forEach(checkbox => {
+            if (!currentUser.authorizedLabs.includes(checkbox.value)) {
+                if (checkbox.parentElement) {
+                    checkbox.parentElement.style.display = 'none';
+                }
+            }
+        });
+        
+        // If user has only one lab, auto-check it and hide the selection
+        if (currentUser.authorizedLabs.length === 1) {
+            const userLabCheckbox = Array.from(labCheckboxes).find(cb => cb.value === currentUser.authorizedLabs[0]);
+            if (userLabCheckbox) {
+                userLabCheckbox.checked = true;
+                userLabCheckbox.disabled = true;
+            }
+            
+            // Add a note for single-lab users
+            if (checkboxGroup && !checkboxGroup.querySelector('.single-lab-note')) {
+                const note = document.createElement('p');
+                note.className = 'single-lab-note';
+                note.style.cssText = 'color: #666; font-style: italic; margin-top: 10px;';
+                note.textContent = `Report will include equipment from ${currentUser.authorizedLabs[0]} (your assigned lab).`;
+                checkboxGroup.appendChild(note);
+            }
+        }
+    } else {
+        // For admin and grant users, show all options
+        if (printAllLabs && printAllLabs.parentElement) {
+            printAllLabs.parentElement.style.display = 'block';
+        }
+        
+        labCheckboxes.forEach(checkbox => {
+            if (checkbox.parentElement) {
+                checkbox.parentElement.style.display = 'block';
+            }
+        });
+    }
+}
+
+function addAdminButton() {
+    const headerActions = document.querySelector('.header-right');
+    if (headerActions && !document.getElementById('adminBtn')) {
+        const adminBtn = document.createElement('button');
+        adminBtn.id = 'adminBtn';
+        adminBtn.className = 'btn-admin';
+        adminBtn.innerHTML = `
+            <span class="material-icons">admin_panel_settings</span>
+            Admin Panel
+        `;
+        adminBtn.style.cssText = `
+            background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        `;
+        adminBtn.addEventListener('click', () => {
+            window.location.href = '/admin.html';
+        });
+        adminBtn.addEventListener('mouseover', () => {
+            adminBtn.style.transform = 'translateY(-1px)';
+            adminBtn.style.boxShadow = '0 4px 8px rgba(211, 47, 47, 0.3)';
+        });
+        adminBtn.addEventListener('mouseout', () => {
+            adminBtn.style.transform = 'translateY(0)';
+            adminBtn.style.boxShadow = 'none';
+        });
+        headerActions.appendChild(adminBtn);
+    }
+}
+
+function addLogoutButton() {
+    const headerActions = document.querySelector('.header-right');
+    if (headerActions && !document.getElementById('logoutBtn')) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.id = 'logoutBtn';
+        logoutBtn.className = 'btn-logout';
+        logoutBtn.innerHTML = `
+            <span class="material-icons">logout</span>
+            Logout
+        `;
+        logoutBtn.style.cssText = `
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        `;
+        logoutBtn.addEventListener('click', logout);
+        logoutBtn.addEventListener('mouseover', () => {
+            logoutBtn.style.transform = 'translateY(-1px)';
+            logoutBtn.style.boxShadow = '0 4px 8px rgba(108, 117, 125, 0.3)';
+        });
+        logoutBtn.addEventListener('mouseout', () => {
+            logoutBtn.style.transform = 'translateY(0)';
+            logoutBtn.style.boxShadow = 'none';
+        });
+        headerActions.appendChild(logoutBtn);
+    }
+}
+
+function updateHeaderWithUserInfo() {
+    const headerContent = document.querySelector('.header-left p');
+    if (headerContent && currentUser) {
+        headerContent.innerHTML = `
+            Welcome ${currentUser.firstName} ${currentUser.lastName} (${currentUser.role.toUpperCase()}) - 
+            Authorized Labs: ${currentUser.authorizedLabs.join(', ')}
+        `;
+    }
+}
+
+function logout() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userId');
+    window.location.href = '/login.html';
+}
+
+// Modified API call function to include auth token
+async function apiCall(url, options = {}) {
+    const token = getAuthToken();
+    
+    const config = {
+        ...options,
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            ...options.headers
+        }
+    };
+    
+    try {
+        const response = await fetch(url, config);
+        
+        if (response.status === 401 || response.status === 403) {
+            // Token is invalid or expired
+            logout();
+            return null;
+        }
+        
+        return response;
+    } catch (error) {
+        console.error('API call error:', error);
+        throw error;
+    }
+}
 
 // DOM elements
 const searchInput = document.getElementById('searchInput');
@@ -18,7 +322,7 @@ const equipmentModal = document.getElementById('equipmentModal');
 const modalTitle = document.getElementById('modalTitle');
 const modalBody = document.getElementById('modalBody');
 const closeModal = document.getElementById('closeModal');
-const printModal = document.getElementById('printModal');
+const printModal = document.getElementById('closePrintModal');
 const closePrintModal = document.getElementById('closePrintModal');
 const printAllLabs = document.getElementById('printAllLabs');
 const generateReport = document.getElementById('generateReport');
@@ -32,7 +336,13 @@ const previewImg = document.getElementById('previewImg');
 const removeImage = document.getElementById('removeImage');
 
 // Initialize the application
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Check authentication first
+    const isAuthenticated = await checkAuthAndRedirect();
+    if (!isAuthenticated) {
+        return; // User will be redirected to login
+    }
+    
     loadEquipmentFromAPI();
     setupEventListeners();
       // Check QRCode library on page load
@@ -110,10 +420,10 @@ async function loadEquipmentFromAPI() {
         
         // Add cache busting parameter to force fresh data
         const timestamp = new Date().getTime();
-        const response = await fetch(`${API_BASE_URL}/equipment?_t=${timestamp}`);
+        const response = await apiCall(`${API_BASE_URL}/equipment?_t=${timestamp}`);
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response || !response.ok) {
+            throw new Error(`HTTP error! status: ${response?.status || 'Network error'}`);
         }
         
         const freshData = await response.json();
@@ -134,12 +444,12 @@ async function loadEquipmentFromAPI() {
 
 async function addEquipmentToAPI(formData) {
     try {
-        const response = await fetch(`${API_BASE_URL}/equipment`, {
+        const response = await apiCall(`${API_BASE_URL}/equipment`, {
             method: 'POST',
             body: formData // FormData object with file upload
         });
         
-        if (!response.ok) {
+        if (!response || !response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
         }
@@ -252,8 +562,23 @@ function debounce(func, wait) {
 async function filterEquipment() {
     try {
         const searchTerm = searchInput.value.trim();
-        const selectedLab = labSelect.value;
+        let selectedLab = labSelect.value;
         const selectedStatus = statusFilter.value;
+
+        // For faculty users, validate lab access
+        if (currentUser && currentUser.role === 'faculty') {
+            if (selectedLab && !currentUser.authorizedLabs.includes(selectedLab)) {
+                console.warn('Access denied: Faculty user trying to access unauthorized lab');
+                showNotification('Access denied to this lab', 'error');
+                return;
+            }
+            
+            // If no lab selected and faculty has only one lab, auto-select it
+            if (!selectedLab && currentUser.authorizedLabs.length === 1) {
+                selectedLab = currentUser.authorizedLabs[0];
+                labSelect.value = selectedLab;
+            }
+        }
 
         // Build query parameters
         const params = new URLSearchParams();
@@ -262,9 +587,9 @@ async function filterEquipment() {
         if (selectedStatus) params.append('status', selectedStatus);
 
         // Fetch filtered data from API
-        const response = await fetch(`${API_BASE_URL}/equipment?${params.toString()}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        const response = await apiCall(`${API_BASE_URL}/equipment?${params.toString()}`);
+        if (!response || !response.ok) {
+            throw new Error(`HTTP error! status: ${response?.status || 'Network error'}`);
         }
         
         filteredData = await response.json();
@@ -273,8 +598,18 @@ async function filterEquipment() {
         console.error('Error filtering equipment:', error);
         // Fallback to local filtering if API fails
         const searchTerm = searchInput.value.toLowerCase();
-        const selectedLab = labSelect.value;
-        const selectedStatus = statusFilter.value;        filteredData = equipmentData.filter(item => {
+        let selectedLab = labSelect.value;
+        const selectedStatus = statusFilter.value;
+
+        // Validate lab access for faculty in fallback mode too
+        if (currentUser && currentUser.role === 'faculty') {
+            if (selectedLab && !currentUser.authorizedLabs.includes(selectedLab)) {
+                showNotification('Access denied to this lab', 'error');
+                return;
+            }
+        }
+
+        filteredData = equipmentData.filter(item => {
             const matchesSearch = !searchTerm || 
                 item.name.toLowerCase().includes(searchTerm) ||
                 item.category.toLowerCase().includes(searchTerm) ||
@@ -374,9 +709,9 @@ async function showEquipmentDetails(equipmentId) {
         // If not found, fetch from API
         if (!equipment) {
             console.log('Equipment not found in local data, fetching from API...');
-            const response = await fetch(`${API_BASE_URL}/equipment/${equipmentId}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            const response = await apiCall(`${API_BASE_URL}/equipment/${equipmentId}`);
+            if (!response || !response.ok) {
+                throw new Error(`HTTP error! status: ${response?.status || 'Network error'}`);
             }
             equipment = await response.json();
         }
@@ -491,9 +826,9 @@ async function showEquipmentDetails(equipmentId) {
 
                     ${equipment.created_at ? `
                         <div class="info-row">
-                            <span><strong>Added:</strong> ${formatDate(equipment.created_at)}</span>
+                            <span><strong>Added:</strong> ${formatDate(equipment.created_at)}${equipment.createdByName ? ` by ${equipment.createdByName}` : ''}</span>
                             ${equipment.updated_at && equipment.updated_at !== equipment.created_at ? 
-                                `<span><strong>Last Updated:</strong> ${formatDate(equipment.updated_at)}</span>` : ''}
+                                `<span><strong>Last Updated:</strong> ${formatDate(equipment.updated_at)}${equipment.updatedByName ? ` by ${equipment.updatedByName}` : ''}</span>` : ''}
                         </div>
                     ` : ''}
 
@@ -639,6 +974,15 @@ async function generateWordReport() {
     if (selectedLabs.length === 0) {
         showNotification('Please select at least one lab to include in the report.', 'warning');
         return;
+    }
+
+    // Validate lab access for faculty users
+    if (currentUser && currentUser.role === 'faculty') {
+        const unauthorizedLabs = selectedLabs.filter(lab => !currentUser.authorizedLabs.includes(lab));
+        if (unauthorizedLabs.length > 0) {
+            showNotification(`Access denied: You are not authorized to generate reports for lab(s): ${unauthorizedLabs.join(', ')}`, 'error');
+            return;
+        }
     }
 
     try {
@@ -1084,14 +1428,14 @@ async function handleEditEquipment(equipmentId, form) {
         }
         
         // Send PUT request to update equipment
-        const response = await fetch(`${API_BASE_URL}/equipment/${equipmentId}`, {
+        const response = await apiCall(`${API_BASE_URL}/equipment/${equipmentId}`, {
             method: 'PUT',
             body: formData
         });
         
-        if (!response.ok) {
+        if (!response || !response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            throw new Error(errorData.error || `HTTP error! status: ${response?.status || 'Network error'}`);
         }
           const updatedEquipment = await response.json();
         console.log('Server response:', updatedEquipment);
@@ -2051,14 +2395,14 @@ async function uploadEquipmentImage(equipmentId, file) {
         formData.append('notes', equipment.notes || '');
         
         // Send PUT request to update equipment with new image
-        const response = await fetch(`${API_BASE_URL}/equipment/${equipmentId}`, {
+        const response = await apiCall(`${API_BASE_URL}/equipment/${equipmentId}`, {
             method: 'PUT',
             body: formData
         });
         
-        if (!response.ok) {
+        if (!response || !response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            throw new Error(errorData.error || `HTTP error! status: ${response?.status || 'Network error'}`);
         }
         
         const updatedEquipment = await response.json();
