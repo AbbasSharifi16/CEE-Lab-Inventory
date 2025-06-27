@@ -6,6 +6,14 @@ This guide explains how to import equipment data from Excel/Word files into the 
 
 ## 🆕 Latest Features (June 2025)
 
+### Web-Based Database Management (NEW!)
+- ✅ **Admin Panel Integration** - Complete database management through web interface
+- ✅ **Backup & Restore** - Upload/download JSON backups without command line
+- ✅ **Clear Database** - Web-based database clearing with safety confirmations
+- ✅ **Clear & Restore** - One-click database refresh functionality
+- ✅ **File Upload Interface** - Drag-and-drop JSON file restoration
+- ✅ **Progress Feedback** - Real-time operation status and error handling
+
 ### Enhanced Search Capabilities
 - ✅ **FIU ID Search with/without dashes** - Search "4980-00123213" or "498000123213"
 - ✅ **Model field search** - Find equipment by model number

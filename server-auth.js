@@ -700,6 +700,306 @@ app.get('/api/equipment', authenticateToken, (req, res) => {
     }
 });
 
+// Get single equipment item
+app.get('/api/equipment/:id', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    console.log('Fetching equipment with ID:', id);
+    
+    try {
+        const sql = `
+            SELECT e.*, 
+                   creator.firstName || ' ' || creator.lastName as createdByName,
+                   updater.firstName || ' ' || updater.lastName as updatedByName
+            FROM equipment e
+            LEFT JOIN users creator ON e.created_by = creator.id
+            LEFT JOIN users updater ON e.updated_by = updater.id
+            WHERE e.id = ?
+        `;
+        
+        const stmt = db.prepare(sql);
+        const row = stmt.get(id);
+        
+        if (!row) {
+            return res.status(404).json({ error: 'Equipment not found' });
+        }
+        
+        // Check if user has access to this equipment's lab
+        if (req.user.role !== 'admin' && req.user.role !== 'grant') {
+            const authorizedLabs = req.user.authorizedLabs.split(',');
+            if (!authorizedLabs.includes(row.lab)) {
+                return res.status(403).json({ error: 'Access denied to this equipment' });
+            }
+        }
+        
+        // Add calculated age
+        const equipmentWithAge = {
+            ...row,
+            age: calculateAge(row.buyingDate)
+        };
+        
+        res.json(equipmentWithAge);
+    } catch (error) {
+        console.error('Error fetching equipment:', error.message);
+        return res.status(500).json({ error: 'Database error: ' + error.message });
+    }
+});
+
+// Add new equipment
+app.post('/api/equipment', authenticateToken, upload.single('image'), (req, res) => {
+    console.log('Received POST request body:', req.body);
+    
+    const {
+        name,
+        category,
+        model,
+        lab,
+        buyingDate,
+        serialNumber,
+        fiuId,
+        quantity,
+        price,
+        status,
+        notes,
+        manualLink
+    } = req.body;
+
+    // Check if user has access to add equipment to this lab
+    if (req.user.role !== 'admin' && req.user.role !== 'grant') {
+        const authorizedLabs = req.user.authorizedLabs.split(',');
+        if (!authorizedLabs.includes(lab)) {
+            return res.status(403).json({ error: 'Access denied to add equipment to this lab' });
+        }
+    }
+    
+    console.log('Extracted fields:');
+    console.log('- name:', name);
+    console.log('- category:', category);
+    console.log('- model:', model);
+    console.log('- fiuId:', fiuId);
+    console.log('- manualLink:', manualLink);
+    console.log('- lab:', lab);
+    
+    // Validate required fields (buyingDate and price are now optional)
+    if (!name || !category || !lab || !serialNumber || !quantity || !status) {
+        console.log('Missing required fields');
+        return res.status(400).json({ error: 'Missing required fields. Required: name, category, lab, serialNumber, quantity, status' });
+    }
+    
+    try {
+        const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+        
+        const insertSQL = `
+            INSERT INTO equipment (name, category, model, lab, buyingDate, serialNumber, fiuId, quantity, price, status, notes, image, manualLink, created_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        
+        console.log('About to insert with values:', [
+            name, category, model || null, lab, buyingDate || null, serialNumber, fiuId || null, parseInt(quantity), price ? parseFloat(price) : null, status, notes || '', imagePath, manualLink || null, req.user.id
+        ]);
+        
+        const insertStmt = db.prepare(insertSQL);
+        const result = insertStmt.run(
+            name,
+            category,
+            model || null,
+            lab,
+            buyingDate || null,
+            serialNumber,
+            fiuId || null,
+            parseInt(quantity),
+            price ? parseFloat(price) : null,
+            status,
+            notes || '',
+            imagePath,
+            manualLink || null,
+            req.user.id
+        );
+        
+        console.log('Equipment inserted with ID:', result.lastInsertRowid);
+        
+        // Fetch the newly created equipment with user names
+        const fetchSQL = `
+            SELECT e.*, 
+                   creator.firstName || ' ' || creator.lastName as createdByName,
+                   updater.firstName || ' ' || updater.lastName as updatedByName
+            FROM equipment e
+            LEFT JOIN users creator ON e.created_by = creator.id
+            LEFT JOIN users updater ON e.updated_by = updater.id
+            WHERE e.id = ?
+        `;
+        
+        const fetchStmt = db.prepare(fetchSQL);
+        const row = fetchStmt.get(result.lastInsertRowid);
+        
+        if (!row) {
+            return res.status(500).json({ error: 'Equipment created but error fetching details' });
+        }
+        
+        const equipmentWithAge = {
+            ...row,
+            age: calculateAge(row.buyingDate)
+        };
+        
+        res.status(201).json(equipmentWithAge);
+    } catch (error) {
+        console.error('Error inserting equipment:', error.message);
+        return res.status(500).json({ error: 'Database error: ' + error.message });
+    }
+});
+
+// Update equipment
+app.put('/api/equipment/:id', authenticateToken, upload.single('image'), (req, res) => {
+    const { id } = req.params;
+    console.log('Received PUT request for ID:', id);
+    console.log('Request body:', req.body);
+
+    try {
+        // First check if the equipment exists and user has access
+        const equipment = db.prepare('SELECT lab FROM equipment WHERE id = ?').get(id);
+        
+        if (!equipment) {
+            return res.status(404).json({ error: 'Equipment not found' });
+        }
+
+        // Check if user has access to this equipment's lab
+        if (req.user.role !== 'admin' && req.user.role !== 'grant') {
+            const authorizedLabs = req.user.authorizedLabs.split(',');
+            if (!authorizedLabs.includes(equipment.lab)) {
+                return res.status(403).json({ error: 'Access denied to modify this equipment' });
+            }
+        }
+
+        const {
+            name,
+            category,
+            model,
+            lab,
+            buyingDate,
+            serialNumber,
+            fiuId,
+            quantity,
+            price,
+            status,
+            notes,
+            manualLink
+        } = req.body;
+
+        // Validate required fields
+        if (!name || !category || !lab || !serialNumber || !quantity || !status) {
+            return res.status(400).json({ 
+                error: 'Missing required fields. Required: name, category, lab, serialNumber, quantity, status' 
+            });
+        }
+
+        // Validate quantity is a valid number
+        const quantityNum = parseInt(quantity);
+        if (isNaN(quantityNum) || quantityNum < 1) {
+            return res.status(400).json({ error: 'Quantity must be a valid number greater than 0' });
+        }
+
+        // Validate price if provided
+        let priceNum = null;
+        if (price && price !== '') {
+            priceNum = parseFloat(price);
+            if (isNaN(priceNum) || priceNum < 0) {
+                return res.status(400).json({ error: 'Price must be a valid number greater than or equal to 0' });
+            }
+        }
+
+        // Check if user has access to move equipment to the new lab
+        if (lab && lab !== equipment.lab) {
+            if (req.user.role !== 'admin' && req.user.role !== 'grant') {
+                const authorizedLabs = req.user.authorizedLabs.split(',');
+                if (!authorizedLabs.includes(lab)) {
+                    return res.status(403).json({ error: 'Access denied to move equipment to this lab' });
+                }
+            }
+        }
+    
+        console.log('Extracted fields for update:');
+        console.log('- name:', name);
+        console.log('- category:', category);
+        console.log('- model:', model);
+        console.log('- fiuId:', fiuId);
+        console.log('- manualLink:', manualLink);
+        console.log('- lab:', lab);
+        
+        let imagePath = null;
+        if (req.file) {
+            imagePath = `/uploads/${req.file.filename}`;
+            console.log('New image uploaded:', imagePath);
+        } else if (req.body.keepImage === 'true') {
+            // Keep existing image
+            imagePath = req.body.currentImage;
+            console.log('Keeping existing image:', imagePath);
+        }
+        
+        const updateSQL = `
+            UPDATE equipment 
+            SET name = ?, category = ?, model = ?, lab = ?, buyingDate = ?, serialNumber = ?, fiuId = ?,
+                quantity = ?, price = ?, status = ?, notes = ?, image = ?, manualLink = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+            WHERE id = ?
+        `;
+        
+        console.log('About to update with values:', [
+            name, category, model || null, lab, buyingDate || null, serialNumber, fiuId || null, quantityNum, priceNum, status, notes || '', imagePath, manualLink || null, req.user.id, id
+        ]);
+        
+        const updateStmt = db.prepare(updateSQL);
+        const result = updateStmt.run(
+            name,
+            category,
+            model || null,
+            lab,
+            buyingDate || null,
+            serialNumber,
+            fiuId || null,
+            quantityNum,
+            priceNum,
+            status,
+            notes || '',
+            imagePath,
+            manualLink || null,
+            req.user.id,
+            id
+        );
+        
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Equipment not found' });
+        }
+        
+        // Fetch the updated record with creator/updater names
+        const fetchSQL = `
+            SELECT e.*, 
+                   creator.firstName || ' ' || creator.lastName as createdByName,
+                   updater.firstName || ' ' || updater.lastName as updatedByName
+            FROM equipment e
+            LEFT JOIN users creator ON e.created_by = creator.id
+            LEFT JOIN users updater ON e.updated_by = updater.id
+            WHERE e.id = ?
+        `;
+        
+        const fetchStmt = db.prepare(fetchSQL);
+        const row = fetchStmt.get(id);
+        
+        if (!row) {
+            return res.status(404).json({ error: 'Updated equipment not found' });
+        }
+        
+        const equipmentWithAge = {
+            ...row,
+            age: calculateAge(row.buyingDate)
+        };
+        
+        console.log('Successfully updated equipment:', equipmentWithAge);
+        res.json(equipmentWithAge);
+        
+    } catch (error) {
+        console.error('Error updating equipment:', error.message);
+        return res.status(500).json({ error: 'Database error: ' + error.message });
+    }
+});
+
 // Equipment Backup API (admin only)
 app.post('/api/admin/backup', authenticateToken, requireAdmin, async (req, res) => {
     try {
@@ -879,6 +1179,156 @@ app.get('/api/admin/backup', authenticateToken, requireAdmin, async (req, res) =
     } catch (error) {
         console.error('Error creating backup:', error);
         res.status(500).json({ error: 'Failed to create backup' });
+    }
+});
+
+// Restore equipment from backup (admin only)
+app.post('/api/admin/restore', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { data, clearFirst } = req.body;
+        let equipmentData = data;
+
+        // If data has metadata and equipment properties (backup format), extract equipment
+        if (data.metadata && data.equipment) {
+            equipmentData = data.equipment;
+        }
+
+        if (!Array.isArray(equipmentData)) {
+            return res.status(400).json({ error: 'Invalid data format. Expected array of equipment items.' });
+        }
+
+        const userId = req.user.id;
+        let importedCount = 0;
+        let errors = [];
+
+        // Validation for required fields
+        const requiredFields = ['name', 'category', 'lab', 'serialNumber', 'quantity', 'status'];
+        
+        for (const item of equipmentData) {
+            for (const field of requiredFields) {
+                if (!item[field] && item[field] !== 0) {
+                    errors.push(`Item missing required field "${field}": ${JSON.stringify(item)}`);
+                    break;
+                }
+            }
+        }
+
+        if (errors.length > 0) {
+            return res.status(400).json({ 
+                error: 'Validation errors found',
+                details: errors.slice(0, 5) // Show first 5 errors
+            });
+        }
+
+        // Clear existing data if requested
+        if (clearFirst) {
+            console.log('🗑️ Clearing existing equipment data...');
+            const deleteStmt = db.prepare('DELETE FROM equipment');
+            deleteStmt.run();
+            console.log('✅ Existing equipment data cleared');
+        }
+
+        // Prepare the insert statement
+        const insertStmt = db.prepare(`
+            INSERT INTO equipment (
+                name, category, model, lab, buyingDate, 
+                serialNumber, fiuId, quantity, price, 
+                status, notes, image, manualLink, created_by, updated_by,
+                created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        // Track used serial numbers to handle duplicates
+        const usedSerials = new Set();
+        
+        // Get existing serial numbers if not clearing
+        if (!clearFirst) {
+            const existingStmt = db.prepare('SELECT serialNumber FROM equipment');
+            const existing = existingStmt.all();
+            existing.forEach(row => usedSerials.add(row.serialNumber));
+        }
+
+        for (const item of equipmentData) {
+            try {
+                // Handle duplicate serial numbers
+                let serialNumber = item.serialNumber;
+                let counter = 1;
+                while (usedSerials.has(serialNumber)) {
+                    serialNumber = `${item.serialNumber}-DUP${counter}`;
+                    counter++;
+                }
+                usedSerials.add(serialNumber);
+
+                const now = new Date().toISOString();
+                
+                insertStmt.run(
+                    item.name,
+                    item.category,
+                    item.model || '',
+                    item.lab,
+                    item.buyingDate || '',
+                    serialNumber,
+                    item.fiuId || '',
+                    item.quantity,
+                    item.price || null,
+                    item.status,
+                    item.notes || '',
+                    item.image || null,
+                    item.manualLink || '',
+                    userId,
+                    userId,
+                    item.created_at || now,
+                    now
+                );
+
+                importedCount++;
+                
+                if (serialNumber !== item.serialNumber) {
+                    console.log(`⚠️ Renamed duplicate serial: ${item.serialNumber} → ${serialNumber}`);
+                }
+
+            } catch (error) {
+                console.error(`Error importing item: ${JSON.stringify(item)}`, error);
+                errors.push(`Failed to import: ${item.name} - ${error.message}`);
+            }
+        }
+
+        console.log(`✅ Restore completed: ${importedCount} items imported`);
+        
+        res.json({
+            success: true,
+            imported: importedCount,
+            errors: errors.length > 0 ? errors.slice(0, 10) : undefined
+        });
+
+    } catch (error) {
+        console.error('Error restoring backup:', error);
+        res.status(500).json({ error: 'Failed to restore backup: ' + error.message });
+    }
+});
+
+// Clear all equipment data (admin only)
+app.post('/api/admin/clear', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        // Get count before deletion
+        const countStmt = db.prepare('SELECT COUNT(*) as count FROM equipment');
+        const { count } = countStmt.get();
+
+        // Delete all equipment
+        const deleteStmt = db.prepare('DELETE FROM equipment');
+        const result = deleteStmt.run();
+
+        console.log(`🗑️ Database cleared: ${count} equipment items removed`);
+        
+        res.json({
+            success: true,
+            deletedCount: count,
+            message: `Successfully cleared ${count} equipment items`
+        });
+
+    } catch (error) {
+        console.error('Error clearing database:', error);
+        res.status(500).json({ error: 'Failed to clear database: ' + error.message });
     }
 });
 

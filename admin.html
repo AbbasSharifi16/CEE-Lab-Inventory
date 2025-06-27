@@ -251,6 +251,26 @@
             color: white;
         }
 
+        .btn-warning {
+            background: linear-gradient(135deg, #ff8f00 0%, #ffb300 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+            color: white;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .admin-actions .btn {
+            min-width: 140px;
+        }
+
         .btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -386,6 +406,18 @@
                         <button onclick="createBackupWithDirectoryChoice()" class="btn btn-secondary" title="Backup equipment list to JSON file">
                             <span class="material-icons">backup</span>
                             Backup Equipment
+                        </button>
+                        <button onclick="showRestoreModal()" class="btn btn-primary" title="Upload and restore equipment from JSON backup">
+                            <span class="material-icons">restore</span>
+                            Restore Backup
+                        </button>
+                        <button onclick="clearDatabase()" class="btn btn-warning" title="Clear all equipment data">
+                            <span class="material-icons">clear_all</span>
+                            Clear Database
+                        </button>
+                        <button onclick="clearAndRestore()" class="btn btn-danger" title="Clear database and restore from backup">
+                            <span class="material-icons">refresh</span>
+                            Clear & Restore
                         </button>
                     </div>
                 </div>
@@ -638,6 +670,55 @@
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Restore Backup Modal -->
+        <div id="restoreModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>
+                        <span class="material-icons">restore</span>
+                        Restore Equipment Backup
+                    </h3>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div id="restoreSuccessMessage" class="success-message"></div>
+                    <div id="restoreErrorMessage" class="error-message"></div>
+                    
+                    <div class="restore-form">
+                        <div class="form-group full-width">
+                            <label for="backupFile">Select JSON Backup File *</label>
+                            <input type="file" id="backupFile" accept=".json" required 
+                                   style="padding: 10px; border: 2px dashed #e1e5e9; border-radius: 6px; background: #f8f9fa;">
+                            <small style="color: #666; margin-top: 5px; display: block;">
+                                Choose a JSON backup file created by the backup feature
+                            </small>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>
+                                <input type="checkbox" id="clearBeforeRestore" style="margin-right: 8px;">
+                                Clear existing equipment before restore
+                            </label>
+                            <small style="color: #666; margin-top: 5px; display: block;">
+                                ⚠️ Warning: This will delete all current equipment data before importing
+                            </small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" id="cancelRestore" class="btn btn-secondary">
+                                <span class="material-icons">cancel</span>
+                                Cancel
+                            </button>
+                            <button type="button" onclick="uploadAndRestore()" class="btn btn-primary">
+                                <span class="material-icons">restore</span>
+                                Restore Backup
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1217,6 +1298,187 @@
                 createBackup();
             }
         }
+
+        // Show restore modal
+        function showRestoreModal() {
+            const modal = document.getElementById('restoreModal');
+            modal.style.display = 'block';
+            
+            // Clear any previous messages
+            document.getElementById('restoreSuccessMessage').style.display = 'none';
+            document.getElementById('restoreErrorMessage').style.display = 'none';
+            
+            // Reset form
+            document.getElementById('backupFile').value = '';
+            document.getElementById('clearBeforeRestore').checked = false;
+        }
+
+        // Upload and restore backup
+        async function uploadAndRestore() {
+            const fileInput = document.getElementById('backupFile');
+            const clearBeforeRestore = document.getElementById('clearBeforeRestore').checked;
+            
+            if (!fileInput.files[0]) {
+                showRestoreError('Please select a JSON backup file.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            
+            // Validate file type
+            if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+                showRestoreError('Please select a valid JSON file.');
+                return;
+            }
+
+            try {
+                // Read file content
+                const fileContent = await file.text();
+                let jsonData;
+                
+                try {
+                    jsonData = JSON.parse(fileContent);
+                } catch (parseError) {
+                    showRestoreError('Invalid JSON file format. Please check your backup file.');
+                    return;
+                }
+
+                // Show loading state
+                const restoreBtn = document.querySelector('button[onclick="uploadAndRestore()"]');
+                if (restoreBtn) {
+                    const originalText = restoreBtn.innerHTML;
+                    restoreBtn.innerHTML = '<span class="material-icons">hourglass_empty</span> Restoring...';
+                    restoreBtn.disabled = true;
+                }
+
+                console.log('🔄 Starting equipment restore...');
+
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/admin/restore', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        data: jsonData,
+                        clearFirst: clearBeforeRestore
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(errorData || 'Failed to restore backup');
+                }
+
+                const result = await response.json();
+                showRestoreSuccess(`Restore completed! ${result.imported} items imported successfully.`);
+                
+                // Close modal after short delay
+                setTimeout(() => {
+                    document.getElementById('restoreModal').style.display = 'none';
+                }, 2000);
+                
+                console.log(`✅ Restore completed: ${result.imported} items imported`);
+
+            } catch (error) {
+                console.error('Error restoring backup:', error);
+                showRestoreError('Failed to restore backup: ' + error.message);
+            } finally {
+                // Reset button state
+                const restoreBtn = document.querySelector('button[onclick="uploadAndRestore()"]');
+                if (restoreBtn) {
+                    restoreBtn.innerHTML = '<span class="material-icons">restore</span> Restore Backup';
+                    restoreBtn.disabled = false;
+                }
+            }
+        }
+
+        // Clear database
+        async function clearDatabase() {
+            if (!confirm('⚠️ WARNING: This will DELETE ALL equipment data!\n\nThis action cannot be undone. Are you sure you want to continue?')) {
+                return;
+            }
+
+            if (!confirm('🔴 FINAL CONFIRMATION: All equipment will be permanently deleted.\n\nClick OK to proceed or Cancel to abort.')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/admin/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to clear database');
+                }
+
+                const result = await response.json();
+                showSuccess(`Database cleared successfully! Removed ${result.deletedCount} equipment items.`);
+                console.log(`✅ Database cleared: ${result.deletedCount} items removed`);
+
+            } catch (error) {
+                console.error('Error clearing database:', error);
+                showError('Failed to clear database: ' + error.message);
+            }
+        }
+
+        // Clear and restore
+        function clearAndRestore() {
+            if (!confirm('⚠️ WARNING: This will DELETE ALL current equipment and replace it with a backup!\n\nThis action cannot be undone. Are you sure?')) {
+                return;
+            }
+
+            // Show restore modal with clear option pre-checked
+            showRestoreModal();
+            document.getElementById('clearBeforeRestore').checked = true;
+            
+            // Add visual indication that this is a clear & restore operation
+            const modalHeader = document.querySelector('#restoreModal .modal-header h3');
+            modalHeader.innerHTML = '<span class="material-icons">refresh</span> Clear & Restore Equipment';
+        }
+
+        // Helper functions for restore modal messages
+        function showRestoreSuccess(message) {
+            const successElement = document.getElementById('restoreSuccessMessage');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+            document.getElementById('restoreErrorMessage').style.display = 'none';
+        }
+
+        function showRestoreError(message) {
+            const errorElement = document.getElementById('restoreErrorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            document.getElementById('restoreSuccessMessage').style.display = 'none';
+        }
+
+        // Modal event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore modal close functionality
+            const restoreModal = document.getElementById('restoreModal');
+            const restoreCloseBtn = restoreModal.querySelector('.close');
+            const cancelRestoreBtn = document.getElementById('cancelRestore');
+
+            restoreCloseBtn.onclick = function() {
+                restoreModal.style.display = 'none';
+            }
+
+            cancelRestoreBtn.onclick = function() {
+                restoreModal.style.display = 'none';
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                if (event.target === restoreModal) {
+                    restoreModal.style.display = 'none';
+                }
+            }
+        });
     </script>
 </body>
 </html>

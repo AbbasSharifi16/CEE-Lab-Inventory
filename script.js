@@ -322,7 +322,7 @@ const equipmentModal = document.getElementById('equipmentModal');
 const modalTitle = document.getElementById('modalTitle');
 const modalBody = document.getElementById('modalBody');
 const closeModal = document.getElementById('closeModal');
-const printModal = document.getElementById('closePrintModal');
+const printModal = document.getElementById('printModal');
 const closePrintModal = document.getElementById('closePrintModal');
 const printAllLabs = document.getElementById('printAllLabs');
 const generateReport = document.getElementById('generateReport');
@@ -988,26 +988,34 @@ async function generateWordReport() {
     try {
         showNotification('Generating Word document...', 'info');
         
-        // Filter data based on selected labs
-        const reportData = equipmentData.filter(item => selectedLabs.includes(item.lab));
+        // Filter data based on selected labs and user authorization
+        let reportData = equipmentData.filter(item => selectedLabs.includes(item.lab));
+        
+        // For faculty users, further filter by authorized labs
+        if (currentUser && currentUser.role === 'faculty') {
+            reportData = reportData.filter(item => currentUser.authorizedLabs.includes(item.lab));
+        }
         
         // Group data by lab
         const groupedData = {};
         selectedLabs.forEach(lab => {
+            if (currentUser.role === 'faculty' && !currentUser.authorizedLabs.includes(lab)) {
+                return; // Skip unauthorized labs for faculty
+            }
             groupedData[lab] = reportData.filter(item => item.lab === lab);
         });
 
-        // Create HTML content for Word document
-        const htmlContent = createHtmlReportContent(groupedData);
+        // Create Word document content
+        const wordContent = createWordDocumentContent(groupedData);
         
-        // Create a blob with HTML content that Word can open
-        const blob = new Blob([htmlContent], { 
+        // Create a blob with proper Word document format
+        const blob = new Blob([wordContent], { 
             type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
         });
         
         const fileName = `CEE_Lab_Equipment_Report_${new Date().toISOString().split('T')[0]}.doc`;
         
-        // Use FileSaver to download
+        // Download the file
         if (typeof saveAs !== 'undefined') {
             saveAs(blob, fileName);
         } else {
@@ -1031,70 +1039,243 @@ async function generateWordReport() {
     }
 }
 
-// Create HTML content for Word document
-function createHtmlReportContent(groupedData) {
+// Create Word document content with proper formatting
+function createWordDocumentContent(groupedData) {
     const currentDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
     });
     
-    let htmlContent = `
-        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-        <head>
-            <meta charset='utf-8'>
-            <title>CEE Lab Equipment Report</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                h1 { color: #1976d2; text-align: center; margin-bottom: 30px; }
-                h2 { color: #1976d2; border-bottom: 2px solid #1976d2; padding-bottom: 5px; margin-top: 30px; }
-                .report-info { text-align: center; margin-bottom: 40px; color: #666; }
-                table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }                th { background-color: #f5f5f5; font-weight: bold; }
-                tr:nth-child(even) { background-color: #f9f9f9; }
-                .status-active-in-use { color: #388e3c; font-weight: bold; }
-                .status-stored-in-storage { color: #1976d2; font-weight: bold; }
-                .status-surplus { color: #795548; font-weight: bold; }
-                .status-obsolete-outdated { color: #9e9e9e; font-weight: bold; }
-                .status-broken-non-functional { color: #d32f2f; font-weight: bold; }
-                .status-troubleshooting { color: #f57c00; font-weight: bold; }
-                .status-under-maintenance { color: #9c27b0; font-weight: bold; }
-                .status-to-be-disposed { color: #424242; font-weight: bold; }
-                .lab-summary { margin-bottom: 20px; padding: 10px; background-color: #f0f7ff; border-left: 4px solid #1976d2; }
-            </style>
-        </head>
-        <body>
-            <h1>CEE Lab Equipment Report</h1>
-            <div class="report-info">Generated on: ${currentDate}</div>
-    `;    Object.keys(groupedData).forEach(lab => {
+    const currentUser_name = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Unknown User';
+    const userRole = currentUser ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'Unknown';
+    
+    // Calculate totals
+    const allEquipment = Object.values(groupedData).flat();
+    const totalItems = allEquipment.length;
+    const totalValue = allEquipment.reduce((sum, item) => {
+        const price = item.price ? parseFloat(item.price) : 0;
+        return sum + (price * item.quantity);
+    }, 0);
+    
+    let wordContent = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset='utf-8'>
+    <title>CEE Lab Equipment Report</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:DoNotPromptForConvert/>
+            <w:DoNotShowRevisions/>
+            <w:DoNotShowComments/>
+            <w:DoNotShowMarkup/>
+        </w:WordDocument>
+        <w:OfficeDocumentSettings>
+            <w:AllowPNG/>
+        </w:OfficeDocumentSettings>
+        <w:OfficeDocumentSettings>
+            <w:PixelsPerInch>96</w:PixelsPerInch>
+        </w:OfficeDocumentSettings>
+    </xml>
+    <![endif]-->
+    <!--[if gte mso 9]>
+    <style>
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in 1.0in 1.0in 1.0in;
+            mso-header-margin: 0.5in;
+            mso-footer-margin: 0.5in;
+            mso-paper-source: 0;
+        }
+        div.Section1 {
+            page: Section1;
+        }
+    </style>
+    <![endif]-->
+    <style>
+        @page {
+            size: A4;
+            margin-top: 1in;
+            margin-bottom: 1in;
+            margin-left: 1in;
+            margin-right: 1in;
+        }
+        
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10pt;
+            line-height: 1.2;
+            margin: 0;
+            padding: 0;
+            max-width: 6.5in; /* A4 width (8.27in) minus 1in margins on each side */
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20pt;
+            border-bottom: 2pt solid #1976d2;
+            padding-bottom: 10pt;
+        }
+        
+        h1 {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 14pt;
+            font-weight: bold;
+            color: #1976d2;
+            margin: 0 0 8pt 0;
+            text-align: center;
+        }
+        
+        h2 {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            font-weight: bold;
+            color: #1976d2;
+            margin: 16pt 0 8pt 0;
+            border-bottom: 1pt solid #1976d2;
+            padding-bottom: 2pt;
+        }
+        
+        .report-info {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10pt;
+            text-align: center;
+            margin-bottom: 8pt;
+            color: #666;
+        }
+        
+        .summary-info {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10pt;
+            margin-bottom: 16pt;
+            padding: 8pt;
+            background-color: #f8f9fa;
+            border: 1pt solid #dee2e6;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 16pt;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10pt;
+        }
+        
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+            border: 1pt solid #333;
+            padding: 4pt;
+            text-align: left;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10pt;
+        }
+        
+        td {
+            border: 1pt solid #666;
+            padding: 4pt;
+            vertical-align: top;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10pt;
+            line-height: 1.1;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .equipment-name {
+            font-weight: bold;
+        }
+        
+        .status-active-in-use { color: #2e7d32; font-weight: bold; }
+        .status-stored-in-storage { color: #1565c0; font-weight: bold; }
+        .status-surplus { color: #6d4c41; font-weight: bold; }
+        .status-obsolete-outdated { color: #757575; font-weight: bold; }
+        .status-broken-non-functional { color: #c62828; font-weight: bold; }
+        .status-troubleshooting { color: #ef6c00; font-weight: bold; }
+        .status-under-maintenance { color: #7b1fa2; font-weight: bold; }
+        .status-to-be-disposed { color: #37474f; font-weight: bold; }
+        .status-not-specified { color: #9e9e9e; }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        .lab-summary {
+            margin-bottom: 12pt;
+            padding: 6pt;
+            background-color: #e3f2fd;
+            border-left: 3pt solid #1976d2;
+            font-size: 10pt;
+        }
+        
+        .footer {
+            margin-top: 20pt;
+            padding-top: 10pt;
+            border-top: 1pt solid #ccc;
+            font-size: 9pt;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="Section1">
+    <div class="header">
+        <h1>CEE Lab Equipment Report</h1>
+        <div class="report-info">
+            Generated on: ${currentDate}<br>
+            Prepared by: ${currentUser_name} (${userRole})<br>
+            Total Equipment Items: ${totalItems} | Total Value: $${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+        </div>
+    </div>
+    
+    <div class="summary-info">
+        <strong>Report Summary:</strong><br>
+        • Labs Included: ${Object.keys(groupedData).join(', ')}<br>
+        • Equipment Categories: ${[...new Set(allEquipment.map(item => item.category))].length}<br>
+        • Report Generation Time: ${new Date().toLocaleTimeString('en-US')}
+    </div>
+`;
+
+    // Add equipment tables for each lab
+    Object.keys(groupedData).forEach((lab, labIndex) => {
         const equipment = groupedData[lab];
-        const totalValue = equipment.reduce((sum, item) => {
+        const labTotalValue = equipment.reduce((sum, item) => {
             const price = item.price ? parseFloat(item.price) : 0;
             return sum + (price * item.quantity);
         }, 0);
         
-        htmlContent += `
+        // Add page break before each new lab (except the first one)
+        if (labIndex > 0) {
+            wordContent += `<div class="page-break"></div>`;
+        }
+        
+        wordContent += `
             <h2>Lab ${lab}</h2>
             <div class="lab-summary">
-                <strong>Total Equipment Items:</strong> ${equipment.length} | 
-                <strong>Total Value:</strong> $${totalValue.toFixed(2)}
+                <strong>Equipment Count:</strong> ${equipment.length} items | 
+                <strong>Lab Total Value:</strong> $${labTotalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
             </div>
         `;
 
         if (equipment.length > 0) {
-            htmlContent += `
+            wordContent += `
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 15%;">Equipment Name</th>
-                            <th style="width: 12%;">Category</th>
+                            <th style="width: 18%;">Equipment Name</th>
+                            <th style="width: 12%;">Brand</th>
+                            <th style="width: 10%;">Model</th>
                             <th style="width: 12%;">Serial Number</th>
-                            <th style="width: 10%;">Buying Date</th>
-                            <th style="width: 8%;">Age</th>
-                            <th style="width: 6%;">Qty</th>
+                            <th style="width: 8%;">Qty</th>
+                            <th style="width: 10%;">Purchase Date</th>
                             <th style="width: 8%;">Price</th>
-                            <th style="width: 10%;">Status</th>
-                            <th style="width: 19%;">Notes</th>
+                            <th style="width: 12%;">Status</th>
+                            <th style="width: 10%;">Notes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1102,63 +1283,80 @@ function createHtmlReportContent(groupedData) {
 
             equipment.forEach(item => {
                 const statusClass = `status-${item.status.toLowerCase().replace(/[\s\/]/g, '-').replace(/[^a-z0-9-]/g, '')}`;
-                htmlContent += `
-                    <tr>                        <td><strong>${item.name}</strong></td>
-                        <td>${item.category}</td>
-                        <td>${item.serialNumber}</td>
+                const notes = item.notes ? (item.notes.length > 50 ? item.notes.substring(0, 47) + '...' : item.notes) : '';
+                
+                wordContent += `
+                    <tr>
+                        <td class="equipment-name">${item.name || 'N/A'}</td>
+                        <td>${item.category || 'N/A'}</td>
+                        <td>${item.model || 'N/A'}</td>
+                        <td>${item.serialNumber || 'N/A'}</td>
+                        <td style="text-align: center;">${item.quantity || 0}</td>
                         <td>${formatDate(item.buyingDate)}</td>
-                        <td>${item.age}</td>
-                        <td>${item.quantity}</td>
-                        <td>${formatPrice(item.price)}</td>
-                        <td><span class="${statusClass}">${item.status}</span></td>
-                        <td>${item.notes}</td>
+                        <td style="text-align: right;">${formatPrice(item.price)}</td>
+                        <td><span class="${statusClass}">${item.status || 'Not specified'}</span></td>
+                        <td style="font-size: 9pt;">${notes}</td>
                     </tr>
                 `;
             });
 
-            htmlContent += `
+            wordContent += `
                     </tbody>
                 </table>
             `;
         } else {
-            htmlContent += `<p><em>No equipment found in this lab.</em></p>`;
+            wordContent += `<p style="font-style: italic; color: #666;">No equipment found in this lab.</p>`;
         }
-    });    // Add summary statistics
-    const allEquipment = Object.values(groupedData).flat();
-    const totalItems = allEquipment.length;
-    const totalValue = allEquipment.reduce((sum, item) => {
-        const price = item.price ? parseFloat(item.price) : 0;
-        return sum + (price * item.quantity);
-    }, 0);
+    });
+
+    // Add summary statistics at the end
     const statusCounts = allEquipment.reduce((counts, item) => {
         counts[item.status] = (counts[item.status] || 0) + 1;
         return counts;
     }, {});
 
-    htmlContent += `
-            <h2>Report Summary</h2>
-            <table style="width: 50%;">
-                <tr><th>Total Equipment Items</th><td>${totalItems}</td></tr>
-                <tr><th>Total Equipment Value</th><td>$${totalValue.toFixed(2)}</td></tr>
-                <tr><th>Labs Included</th><td>${Object.keys(groupedData).join(', ')}</td></tr>
-            </table>
-            
-            <h3>Equipment Status Overview</h3>
-            <table style="width: 40%;">
+    wordContent += `
+        <div class="page-break"></div>
+        <h2>Equipment Status Summary</h2>
+        <table style="width: 60%;">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th style="text-align: center;">Count</th>
+                    <th style="text-align: center;">Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
     `;
 
-    Object.keys(statusCounts).forEach(status => {
+    Object.keys(statusCounts).sort().forEach(status => {
+        const count = statusCounts[status];
+        const percentage = ((count / totalItems) * 100).toFixed(1);
         const statusClass = `status-${status.toLowerCase().replace(/[\s\/]/g, '-').replace(/[^a-z0-9-]/g, '')}`;
-        htmlContent += `<tr><th><span class="${statusClass}">${status}</span></th><td>${statusCounts[status]}</td></tr>`;
+        
+        wordContent += `
+            <tr>
+                <td><span class="${statusClass}">${status}</span></td>
+                <td style="text-align: center;">${count}</td>
+                <td style="text-align: center;">${percentage}%</td>
+            </tr>
+        `;
     });
 
-    htmlContent += `
-            </table>
-        </body>
-        </html>
+    wordContent += `
+            </tbody>
+        </table>
+        
+        <div class="footer">
+            <p>Report generated by CEE Lab Equipment Manager | Florida International University<br>
+            Document created on ${new Date().toLocaleString('en-US')} | Confidential</p>
+        </div>
+</div>
+    </body>
+    </html>
     `;
 
-    return htmlContent;
+    return wordContent;
 }
 
 // Get selected labs for printing
@@ -1434,8 +1632,27 @@ async function handleEditEquipment(equipmentId, form) {
         });
         
         if (!response || !response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `HTTP error! status: ${response?.status || 'Network error'}`);
+            let errorMessage = `HTTP error! status: ${response?.status || 'Network error'}`;
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                } else {
+                    // If it's not JSON, try to get text
+                    const errorText = await response.text();
+                    console.error('Non-JSON error response:', errorText);
+                    if (errorText.includes('<!DOCTYPE') || errorText.includes('<html>')) {
+                        errorMessage = 'Server returned an HTML error page. Check server logs.';
+                    } else {
+                        errorMessage = errorText || errorMessage;
+                    }
+                }
+            } catch (parseError) {
+                console.error('Error parsing error response:', parseError);
+                errorMessage = `HTTP ${response?.status || 'Unknown'} error - Unable to parse response`;
+            }
+            throw new Error(errorMessage);
         }
           const updatedEquipment = await response.json();
         console.log('Server response:', updatedEquipment);
@@ -2386,13 +2603,16 @@ async function uploadEquipmentImage(equipmentId, file) {
         // Add all existing data to FormData
         formData.append('name', equipment.name);
         formData.append('category', equipment.category);
+        formData.append('model', equipment.model || '');
         formData.append('lab', equipment.lab);
-        formData.append('buyingDate', equipment.buyingDate);
+        formData.append('buyingDate', equipment.buyingDate || '');
         formData.append('serialNumber', equipment.serialNumber);
+        formData.append('fiuId', equipment.fiuId || '');
         formData.append('quantity', equipment.quantity);
-        formData.append('price', equipment.price);
+        formData.append('price', equipment.price || '');
         formData.append('status', equipment.status);
         formData.append('notes', equipment.notes || '');
+        formData.append('manualLink', equipment.manualLink || '');
         
         // Send PUT request to update equipment with new image
         const response = await apiCall(`${API_BASE_URL}/equipment/${equipmentId}`, {
@@ -2401,8 +2621,27 @@ async function uploadEquipmentImage(equipmentId, file) {
         });
         
         if (!response || !response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `HTTP error! status: ${response?.status || 'Network error'}`);
+            let errorMessage = `HTTP error! status: ${response?.status || 'Network error'}`;
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                } else {
+                    // If it's not JSON, try to get text
+                    const errorText = await response.text();
+                    console.error('Non-JSON error response:', errorText);
+                    if (errorText.includes('<!DOCTYPE') || errorText.includes('<html>')) {
+                        errorMessage = 'Server returned an HTML error page. Check server logs.';
+                    } else {
+                        errorMessage = errorText || errorMessage;
+                    }
+                }
+            } catch (parseError) {
+                console.error('Error parsing error response:', parseError);
+                errorMessage = `HTTP ${response?.status || 'Unknown'} error - Unable to parse response`;
+            }
+            throw new Error(errorMessage);
         }
         
         const updatedEquipment = await response.json();

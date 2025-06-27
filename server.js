@@ -866,6 +866,28 @@ app.put('/api/equipment/:id', authenticateToken, upload.single('image'), (req, r
             manualLink
         } = req.body;
 
+        // Validate required fields
+        if (!name || !category || !lab || !serialNumber || !quantity || !status) {
+            return res.status(400).json({ 
+                error: 'Missing required fields. Required: name, category, lab, serialNumber, quantity, status' 
+            });
+        }
+
+        // Validate quantity is a valid number
+        const quantityNum = parseInt(quantity);
+        if (isNaN(quantityNum) || quantityNum < 1) {
+            return res.status(400).json({ error: 'Quantity must be a valid number greater than 0' });
+        }
+
+        // Validate price if provided
+        let priceNum = null;
+        if (price && price !== '') {
+            priceNum = parseFloat(price);
+            if (isNaN(priceNum) || priceNum < 0) {
+                return res.status(400).json({ error: 'Price must be a valid number greater than or equal to 0' });
+            }
+        }
+
         // Check if user has access to move equipment to the new lab
         if (lab && lab !== equipment.lab) {
             if (req.user.role !== 'admin' && req.user.role !== 'grant') {
@@ -896,11 +918,12 @@ app.put('/api/equipment/:id', authenticateToken, upload.single('image'), (req, r
           const updateSQL = `
             UPDATE equipment 
             SET name = ?, category = ?, model = ?, lab = ?, buyingDate = ?, serialNumber = ?, fiuId = ?,
-                quantity = ?, price = ?, status = ?, notes = ?, image = ?, manualLink = ?, updated_at = CURRENT_TIMESTAMP
+                quantity = ?, price = ?, status = ?, notes = ?, image = ?, manualLink = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
             WHERE id = ?
         `;
-          console.log('About to update with values:', [
-            name, category, model || null, lab, buyingDate || null, serialNumber, fiuId || null, parseInt(quantity), price ? parseFloat(price) : null, status, notes || '', imagePath, manualLink || null, id
+        
+        console.log('About to update with values:', [
+            name, category, model || null, lab, buyingDate || null, serialNumber, fiuId || null, quantityNum, priceNum, status, notes || '', imagePath, manualLink || null, req.user.id, id
         ]);
         
         db.run(updateSQL, [
@@ -911,30 +934,43 @@ app.put('/api/equipment/:id', authenticateToken, upload.single('image'), (req, r
             buyingDate || null,
             serialNumber,
             fiuId || null,
-            parseInt(quantity),
-            price ? parseFloat(price) : null,
+            quantityNum,
+            priceNum,
             status,
             notes || '',
             imagePath,
             manualLink || null,
+            req.user.id,
             id
         ], function(err) {
             if (err) {
                 console.error('Error updating equipment:', err.message);
-                res.status(500).json({ error: 'Database error' });
-                return;
+                return res.status(500).json({ error: 'Database error: ' + err.message });
             }
             
             if (this.changes === 0) {
-                res.status(404).json({ error: 'Equipment not found' });
-                return;
+                return res.status(404).json({ error: 'Equipment not found' });
             }
-              // Fetch the updated record
-            db.get('SELECT * FROM equipment WHERE id = ?', [id], (err, row) => {
+            
+            // Fetch the updated record with creator/updater names
+            const fetchSQL = `
+                SELECT e.*, 
+                       creator.firstName || ' ' || creator.lastName as createdByName,
+                       updater.firstName || ' ' || updater.lastName as updatedByName
+                FROM equipment e
+                LEFT JOIN users creator ON e.created_by = creator.id
+                LEFT JOIN users updater ON e.updated_by = updater.id
+                WHERE e.id = ?
+            `;
+            
+            db.get(fetchSQL, [id], (err, row) => {
                 if (err) {
                     console.error('Error fetching updated equipment:', err.message);
-                    res.status(500).json({ error: 'Database error' });
-                    return;
+                    return res.status(500).json({ error: 'Database error fetching updated record: ' + err.message });
+                }
+                
+                if (!row) {
+                    return res.status(404).json({ error: 'Updated equipment not found' });
                 }
                 
                 const equipmentWithAge = {
@@ -942,6 +978,7 @@ app.put('/api/equipment/:id', authenticateToken, upload.single('image'), (req, r
                     age: calculateAge(row.buyingDate)
                 };
                 
+                console.log('Successfully updated equipment:', equipmentWithAge);
                 res.json(equipmentWithAge);
             });
         });
