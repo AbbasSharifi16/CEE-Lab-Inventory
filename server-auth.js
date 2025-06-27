@@ -337,14 +337,29 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Verify token
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
-    res.json({ 
-        user: {
-            id: req.user.id,
-            email: req.user.email,
-            role: req.user.role,
-            authorizedLabs: req.user.authorizedLabs.split(',')
+    try {
+        // Get full user details from database
+        const userStmt = db.prepare('SELECT id, firstName, lastName, email, role, authorizedLabs FROM users WHERE id = ?');
+        const userDetails = userStmt.get(req.user.id);
+        
+        if (!userDetails) {
+            return res.status(404).json({ message: 'User not found' });
         }
-    });
+        
+        res.json({ 
+            user: {
+                id: userDetails.id,
+                firstName: userDetails.firstName,
+                lastName: userDetails.lastName,
+                email: userDetails.email,
+                role: userDetails.role,
+                authorizedLabs: userDetails.authorizedLabs.split(',')
+            }
+        });
+    } catch (error) {
+        console.error('Error in verify endpoint:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 
 // Setup password (for new users)

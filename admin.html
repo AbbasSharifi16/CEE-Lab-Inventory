@@ -32,6 +32,18 @@
             gap: 10px;
         }
 
+        .admin-welcome {
+            margin-top: 8px;
+            color: #666;
+            font-size: 14px;
+            font-weight: normal;
+        }
+
+        .admin-welcome .user-name {
+            color: #1e3c72;
+            font-weight: 500;
+        }
+
         .admin-actions {
             display: flex;
             gap: 10px;
@@ -398,10 +410,15 @@
         <main class="main-content">
             <div class="admin-panel">
                 <div class="admin-header">
-                    <h2>
-                        <span class="material-icons">admin_panel_settings</span>
-                        User Management
-                    </h2>
+                    <div>
+                        <h2>
+                            <span class="material-icons">admin_panel_settings</span>
+                            User Management
+                        </h2>
+                        <div id="adminWelcome" class="admin-welcome">
+                            <!-- User info will be loaded here -->
+                        </div>
+                    </div>
                     <div class="admin-actions">
                         <button onclick="createBackupWithDirectoryChoice()" class="btn btn-secondary" title="Backup equipment list to JSON file">
                             <span class="material-icons">backup</span>
@@ -756,12 +773,33 @@
                 if (!response.ok) {
                     throw new Error('Invalid token');
                 }
+                
+                // Get user info and display it
+                const data = await response.json();
+                const user = data.user;
+                displayUserWelcome(user);
+                
             } catch (error) {
                 console.error('Auth verification failed:', error);
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('userRole');
                 localStorage.removeItem('userId');
                 window.location.href = '/login.html';
+            }
+        }
+
+        function displayUserWelcome(user) {
+            const welcomeElement = document.getElementById('adminWelcome');
+            if (welcomeElement && user) {
+                const firstName = user.firstName || 'User';
+                const lastName = user.lastName || '';
+                const fullName = `${firstName} ${lastName}`.trim();
+                
+                welcomeElement.innerHTML = `
+                    Welcome <span class="user-name">${fullName}</span> (${user.role.toUpperCase()})
+                    ${user.authorizedLabs && user.authorizedLabs.length > 0 ? 
+                        `- Authorized Labs: ${user.authorizedLabs.join(', ')}` : ''}
+                `;
             }
         }
 
