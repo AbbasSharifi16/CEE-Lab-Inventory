@@ -465,9 +465,15 @@ app.post('/api/admin/users', authenticateToken, requireAdmin, async (req, res) =
                     <li>Role: ${role}</li>
                     <li>Authorized Labs: ${authorizedLabs.join(', ')}</li>
                 </ul>
-                <p>To complete your registration, please click the link below to set your password:</p>
-                <p style="text-align: center; margin: 30px 0;">
-                    <a href="${setupUrl}" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">Set Your Password</a>
+                <p>To complete your registration, please click the button below to set your password:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${setupUrl}" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: black; padding: 15px 40px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 8px rgba(30, 60, 114, 0.3); transition: all 0.3s ease;">
+                        🔐 Set Your Password
+                    </a>
+                </div>
+                <p style="text-align: center; font-size: 12px; color: #666; margin-top: 15px;">
+                    Or copy and paste this link into your browser:<br>
+                    <span style="word-break: break-all; font-family: monospace; background: #f5f5f5; padding: 5px; border-radius: 4px;">${setupUrl}</span>
                 </p>
                 <p style="font-size: 12px; color: #666;">This link will expire in 24 hours. If you have any questions, please contact the system administrator.</p>
                 <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
