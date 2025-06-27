@@ -4,7 +4,7 @@ let filteredData = [];
 let currentUser = null;
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = window.location.origin + '/api';
 
 // Authentication functions
 function getAuthToken() {
@@ -652,7 +652,7 @@ function renderEquipment() {
         <div class="equipment-card" onclick="showEquipmentDetails(${item.id})">
             <div class="equipment-image">
                 ${item.image ? 
-                    `<img src="${item.image.startsWith('http') ? item.image : 'http://localhost:3000' + item.image}" alt="${item.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    `<img src="${item.image.startsWith('http') ? item.image : window.location.origin + item.image}" alt="${item.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                      <div class="placeholder" style="display:none;"><span class="material-icons">devices</span></div>` :
                     `<div class="placeholder"><span class="material-icons">devices</span></div>`
                 }
@@ -725,7 +725,7 @@ async function showEquipmentDetails(equipmentId) {
                 <div class="detail-grid">
                     ${equipment.image ? `
                         <div class="detail-image">
-                            <img src="${equipment.image.startsWith('http') ? equipment.image : 'http://localhost:3000' + equipment.image}" 
+                            <img src="${equipment.image.startsWith('http') ? equipment.image : window.location.origin + equipment.image}" 
                                  alt="${equipment.name}" 
                                  onerror="this.style.display='none';">
                             <div class="image-edit-overlay" onclick="openImageUploader(${equipment.id})">
